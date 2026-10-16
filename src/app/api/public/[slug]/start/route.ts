@@ -1,5 +1,6 @@
 import { publicTenant, withTenant } from "@/lib/db";
 import { messagesAfter, newToken, normalizePhone } from "@/lib/conversation";
+import { checkStartLimit, rateLimited } from "@/lib/limits";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
@@ -19,6 +20,7 @@ export async function POST(req: Request, { params }: Ctx) {
 
   const token = newToken();
   const data = await withTenant(tenant.id, async (tx) => {
+    await checkStartLimit(tx, phone);
     const [contact] = await tx<{ id: string }[]>`
       insert into contacts (tenant_id, name, phone, email) values (${tenant.id}, ${name}, ${phone}, ${email})
       on conflict (tenant_id, phone) do update
@@ -30,7 +32,8 @@ export async function POST(req: Request, { params }: Ctx) {
     await tx`insert into messages (tenant_id, conversation_id, sender, content)
              values (${tenant.id}, ${conv.id}, 'bot', ${tenant.welcome_message})`;
     return { messages: await messagesAfter(tx, conv.id), status: "bot" };
-  });
+  }).catch(rateLimited);
+  if (data instanceof Response) return data;
 
   return Response.json({ token, ...data });
 }

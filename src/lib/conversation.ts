@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { botReply } from "./bot";
 import { withTenant, type Message, type Tx } from "./db";
+import { checkMessageLimit } from "./limits";
+import { notifyHandoff } from "./notify";
 
 export function newToken() {
   return randomBytes(24).toString("base64url");
@@ -24,6 +26,7 @@ export async function messagesAfter(tx: Tx, conversationId: string, after = 0) {
  */
 export async function handleContactMessage(tenantId: string, conversationId: string, content: string) {
   const ctx = await withTenant(tenantId, async (tx) => {
+    await checkMessageLimit(tx, conversationId);
     await tx`insert into messages (tenant_id, conversation_id, sender, content)
              values (${tenantId}, ${conversationId}, 'contact', ${content})`;
     const [conv] = await tx<{ status: string; contact_id: string }[]>`
@@ -47,9 +50,10 @@ export async function handleContactMessage(tenantId: string, conversationId: str
     result = { reply: "Tuve un problema para responder. Una persona del equipo revisará tu mensaje.", handoff: { reason: "Error al generar respuesta" } };
   }
 
-  await withTenant(tenantId, async (tx) => {
-    const [conv] = await tx<{ status: string }[]>`select status from conversations where id = ${conversationId} for update`;
-    if (conv.status !== "bot") return;
+  const newHandoff = await withTenant(tenantId, async (tx) => {
+    const [conv] = await tx<{ status: string; needs_human: boolean }[]>`
+      select status, needs_human from conversations where id = ${conversationId} for update`;
+    if (conv.status !== "bot") return false;
     if (result.reply) {
       await tx`insert into messages (tenant_id, conversation_id, sender, content)
                values (${tenantId}, ${conversationId}, 'bot', ${result.reply})`;
@@ -57,5 +61,11 @@ export async function handleContactMessage(tenantId: string, conversationId: str
     await tx`update conversations set last_message_at = now()
                ${result.handoff ? tx`, needs_human = true, handoff_reason = ${result.handoff.reason}` : tx``}
              where id = ${conversationId}`;
+    return Boolean(result.handoff) && !conv.needs_human;
   });
+
+  // Aviso solo cuando la conversación pasa a necesitar persona (no en cada mensaje).
+  if (newHandoff && result.handoff) {
+    await notifyHandoff(tenantId, conversationId, result.handoff.reason).catch((e) => console.error("Error al avisar", e));
+  }
 }

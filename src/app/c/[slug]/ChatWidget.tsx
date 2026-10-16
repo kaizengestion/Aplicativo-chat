@@ -67,6 +67,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
     const content = text.trim();
     if (!content || !token || sending) return;
     setText("");
+    setError("");
     setSending(true);
     const optimistic: Message = { id: -Date.now(), sender: "contact", content, created_at: new Date().toISOString() };
     setMessages((prev) => [...prev, optimistic]);
@@ -76,7 +77,10 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
     });
     setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     if (res.ok) merge((await res.json()).messages);
-    else setError("No se pudo enviar el mensaje");
+    else {
+      setText(content);
+      setError((await res.json().catch(() => ({}))).error ?? "No se pudo enviar el mensaje");
+    }
     setSending(false);
   }
 

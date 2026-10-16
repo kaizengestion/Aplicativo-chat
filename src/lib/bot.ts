@@ -50,6 +50,10 @@ function toTurns(history: Message[]): Anthropic.Beta.BetaMessageParam[] {
 export async function botReply(tenant: BotTenant, history: Message[]): Promise<BotResult> {
   const client = claude();
   if (!client) {
+    const last = history[history.length - 1]?.content ?? "";
+    if (/persona|humano|agente/i.test(last)) {
+      return { reply: "(Modo demo) Listo, le aviso al equipo para que una persona siga esta conversación.", handoff: { reason: "El cliente pidió hablar con una persona" } };
+    }
     return {
       reply: `(Modo demo, sin ANTHROPIC_API_KEY) Recibí tu mensaje. Soy ${tenant.bot_name} de ${tenant.name}; cuando el bot esté conectado contestaré con la información del negocio.`,
       handoff: null,

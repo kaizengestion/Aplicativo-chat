@@ -1,5 +1,6 @@
 import { publicTenant, withTenant } from "@/lib/db";
 import { handleContactMessage, messagesAfter } from "@/lib/conversation";
+import { rateLimited } from "@/lib/limits";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
@@ -34,7 +35,11 @@ export async function POST(req: Request, { params }: Ctx) {
   const content = String(body.content ?? "").trim().slice(0, 4000);
   if (!content) return Response.json({ error: "Mensaje vacío" }, { status: 400 });
 
-  await handleContactMessage(found.tenant.id, found.conv.id, content);
+  try {
+    await handleContactMessage(found.tenant.id, found.conv.id, content);
+  } catch (e) {
+    return rateLimited(e);
+  }
   const after = Number(body.after ?? 0) || 0;
   const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after));
   return Response.json({ messages });

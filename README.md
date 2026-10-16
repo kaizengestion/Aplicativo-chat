@@ -38,7 +38,20 @@ Postgres (Supabase)  ── RLS por tenant_id en todas las tablas
    ```
 4. Entra a `http://localhost:3000/signup`, crea tu negocio, carga la información en *Bot y enlace* y copia el texto sugerido a la respuesta automática de WhatsApp Business.
 
-Para desplegar: Vercel (o similar) con las mismas variables de entorno y `NEXT_PUBLIC_APP_URL` apuntando a tu dominio.
+## Desplegar en producción (Supabase + Vercel)
+
+1. **Supabase:** crea un proyecto en https://supabase.com y guarda la contraseña de la base. En *Connect* copia la cadena **Session pooler** (rol `postgres`): esa es `ADMIN_DATABASE_URL`.
+2. **Migrar:** desde tu computadora, con `ADMIN_DATABASE_URL` y una `APP_DB_PASSWORD` nueva, corre `npm run db:migrate`. Eso crea las tablas y el rol `chat_app`.
+3. **`DATABASE_URL`:** la misma cadena del pooler pero con usuario `chat_app.<ref-del-proyecto>` y la clave `APP_DB_PASSWORD` (en Supabase el usuario del pooler lleva el sufijo del proyecto, igual que `postgres.<ref>`).
+4. **Claude:** crea una clave en https://platform.claude.com (*API keys*) y agrega saldo; esa es `ANTHROPIC_API_KEY`.
+5. **Vercel:** importa el repositorio en https://vercel.com, carga `DATABASE_URL`, `SESSION_SECRET`, `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_APP_URL` (y opcionalmente `RESEND_API_KEY` y `NOTIFY_FROM`) y despliega.
+
+Las claves van solo en las variables de entorno de Vercel; no hace falta compartirlas en ningún chat.
+
+## Límites y avisos
+
+- Chat público: máximo 8 mensajes por minuto y 200 por día por conversación; 5 chats nuevos por teléfono por hora y 30 por minuto por negocio (`src/lib/limits.ts`).
+- Cuando el bot pasa una conversación a una persona, se envía un correo a los usuarios del negocio vía Resend (`src/lib/notify.ts`). Sin `RESEND_API_KEY` el aviso solo queda en el log.
 
 ## Estructura
 
@@ -55,7 +68,5 @@ src/app/api/admin/            API del tablero
 ## Pendiente para siguientes iteraciones
 
 - Tiempo real con Supabase Realtime o SSE en lugar de sondeo.
-- Límite de mensajes por IP/conversación (anti-abuso) en el chat público.
 - Invitar más agentes por tenant (la tabla `app_users` ya tiene `role`).
-- Notificación (email/WhatsApp) cuando una conversación necesita persona.
 - Base de conocimiento con archivos (PDF, catálogo) en lugar de solo texto.
