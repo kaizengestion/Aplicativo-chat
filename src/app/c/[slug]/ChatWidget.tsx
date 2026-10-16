@@ -17,8 +17,8 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
   const [error, setError] = useState("");
   const lastId = useRef(0);
 
-  const merge = useCallback((incoming: Message[]) => {
-    if (!incoming.length) return;
+  const merge = useCallback((incoming: Message[] | undefined) => {
+    if (!Array.isArray(incoming) || !incoming.length) return;
     setMessages((prev) => {
       const seen = new Set(prev.map((m) => m.id));
       const next = [...prev, ...incoming.filter((m) => !seen.has(m.id))];
