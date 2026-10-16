@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { cache } from "react";
 
 type Sql = postgres.Sql;
 export type Tx = postgres.TransactionSql;
@@ -10,7 +11,7 @@ export function db(): Sql {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL no está configurada");
     // prepare: false para funcionar con el pooler de Supabase en modo transacción
-    globalForDb.__sql = postgres(url, { max: 10, prepare: false });
+    globalForDb.__sql = postgres(url, { max: 10, prepare: false, fetch_types: false });
   }
   return globalForDb.__sql;
 }
@@ -26,10 +27,11 @@ export async function withTenant<T>(tenantId: string, fn: (tx: Tx) => Promise<T>
 
 export type PublicTenant = { id: string; name: string; bot_name: string; welcome_message: string };
 
-export async function publicTenant(slug: string): Promise<PublicTenant | null> {
+// cache(): la página y su metadata comparten una sola consulta por request.
+export const publicTenant = cache(async (slug: string): Promise<PublicTenant | null> => {
   const rows = await db()<PublicTenant[]>`select * from public_tenant(${slug})`;
   return rows[0] ?? null;
-}
+});
 
 export type Message = {
   id: number;

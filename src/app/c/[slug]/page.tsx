@@ -5,8 +5,13 @@ import ChatWidget from "./ChatWidget";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const tenant = await publicTenant((await params).slug);
-  return { title: tenant ? `Chat con ${tenant.name}` : "Chat" };
+  try {
+    const tenant = await publicTenant((await params).slug);
+    return { title: tenant ? `Chat con ${tenant.name}` : "Chat" };
+  } catch (e) {
+    console.error("Error al generar metadata del chat", e);
+    return { title: "Chat" };
+  }
 }
 
 export default async function PublicChat({ params }: { params: Promise<{ slug: string }> }) {
