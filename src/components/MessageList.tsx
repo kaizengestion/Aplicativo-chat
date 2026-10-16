@@ -7,7 +7,10 @@ export default function MessageList({ messages, perspective, botName, typing }: 
   messages: Message[]; perspective: "contact" | "agent"; botName: string; typing?: boolean;
 }) {
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth" }), [messages.length, typing]);
+  // Con llaves: en navegadores nuevos scrollIntoView devuelve una promesa y React la trataría como función de limpieza.
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, typing]);
 
   return (
     <div className="chat-body">
