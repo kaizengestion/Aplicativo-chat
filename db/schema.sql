@@ -113,10 +113,11 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- Login: buscar usuario por email sin conocer el tenant
-create or replace function find_login(p_email text)
-returns table (user_id uuid, tenant_id uuid, password_hash text, name text)
+drop function if exists find_login(text);
+create function find_login(p_email text)
+returns table (user_id uuid, tenant_id uuid, password_hash text, name text, role text)
 language sql stable security definer set search_path = public as $$
-  select u.id, u.tenant_id, u.password_hash, u.name from app_users u where u.email = lower(p_email)
+  select u.id, u.tenant_id, u.password_hash, u.name, u.role from app_users u where u.email = lower(p_email)
 $$;
 
 -- Alta de un tenant nuevo con su primer admin

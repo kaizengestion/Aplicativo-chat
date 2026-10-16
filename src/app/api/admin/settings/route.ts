@@ -1,9 +1,10 @@
-import { getSession, unauthorized } from "@/lib/auth";
+import { forbidden, getSession, unauthorized } from "@/lib/auth";
 import { withTenant } from "@/lib/db";
 
 export async function PUT(req: Request) {
   const s = await getSession();
   if (!s) return unauthorized();
+  if (s.role !== "admin") return forbidden();
   const b = await req.json().catch(() => ({}));
   const name = String(b.name ?? "").trim().slice(0, 120);
   const botName = String(b.bot_name ?? "").trim().slice(0, 60);

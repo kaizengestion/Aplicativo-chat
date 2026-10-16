@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const hash = await bcrypt.hash(password, 10);
     const [row] = await db()<{ tenant_id: string; user_id: string }[]>`
       select * from signup_tenant(${slug}, ${business}, ${email}, ${hash}, ${name})`;
-    await createSession({ userId: row.user_id, tenantId: row.tenant_id, name });
+    await createSession({ userId: row.user_id, tenantId: row.tenant_id, name, role: "admin" });
     return Response.json({ ok: true });
   } catch (e) {
     if ((e as { code?: string }).code === "23505") {

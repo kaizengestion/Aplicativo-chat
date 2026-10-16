@@ -16,6 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link href="/admin/contacts">Contactos</Link>
         <Link href="/admin/ask">Preguntar</Link>
         <Link href="/admin/settings">Bot y enlace</Link>
+        {session.role === "admin" && <Link href="/admin/team">Equipo</Link>}
         <div className="spacer" />
         <span className="muted" style={{ padding: "8px 10px", fontSize: 13 }}>{session.name}</span>
         <LogoutButton />

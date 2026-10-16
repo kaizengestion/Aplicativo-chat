@@ -48,6 +48,10 @@ Postgres (Supabase)  ── RLS por tenant_id en todas las tablas
 
 Las claves van solo en las variables de entorno de Vercel; no hace falta compartirlas en ningún chat.
 
+## Equipo
+
+En *Equipo* (solo administradores) se agregan personas con email y contraseña inicial. Los **agentes** ven y atienden conversaciones; los **administradores** además cambian el bot y el equipo. Quitar a alguien cierra su sesión de inmediato y sus conversaciones abiertas quedan marcadas como *Necesita persona*.
+
 ## Límites y avisos
 
 - Chat público: máximo 8 mensajes por minuto y 200 por día por conversación; 5 chats nuevos por teléfono por hora y 30 por minuto por negocio (`src/lib/limits.ts`).
@@ -68,5 +72,4 @@ src/app/api/admin/            API del tablero
 ## Pendiente para siguientes iteraciones
 
 - Tiempo real con Supabase Realtime o SSE en lugar de sondeo.
-- Invitar más agentes por tenant (la tabla `app_users` ya tiene `role`).
 - Base de conocimiento con archivos (PDF, catálogo) en lugar de solo texto.

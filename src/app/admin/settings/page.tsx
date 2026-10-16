@@ -11,5 +11,5 @@ export default async function Settings() {
   const h = await headers();
   const base = process.env.NEXT_PUBLIC_APP_URL || `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   const link = `${base}/c/${tenant.slug}`;
-  return <SettingsForm tenant={tenant} link={link} />;
+  return <SettingsForm tenant={tenant} link={link} canEdit={s.role === "admin"} />;
 }

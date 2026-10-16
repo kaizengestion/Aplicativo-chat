@@ -3,7 +3,7 @@ import { useState } from "react";
 
 type Tenant = { name: string; bot_name: string; welcome_message: string; knowledge_base: string };
 
-export default function SettingsForm({ tenant, link }: { tenant: Tenant; link: string }) {
+export default function SettingsForm({ tenant, link, canEdit }: { tenant: Tenant; link: string; canEdit: boolean }) {
   const [msg, setMsg] = useState("");
   const [copied, setCopied] = useState(false);
   const autoReply = `¡Gracias por escribir a ${tenant.name}! Para atenderte al instante entra a nuestro chat: ${link}`;
@@ -34,6 +34,8 @@ export default function SettingsForm({ tenant, link }: { tenant: Tenant; link: s
       </div>
       <form className="card" onSubmit={save}>
         <h3>Configuración del bot</h3>
+        {!canEdit && <p className="muted">Solo un administrador puede cambiar esta configuración.</p>}
+        <fieldset disabled={!canEdit} style={{ border: 0, padding: 0, margin: 0 }}>
         <label htmlFor="name">Nombre del negocio</label>
         <input id="name" name="name" defaultValue={tenant.name} required />
         <label htmlFor="bot_name">Nombre del bot</label>
@@ -49,6 +51,7 @@ export default function SettingsForm({ tenant, link }: { tenant: Tenant; link: s
           <button className="primary">Guardar</button>
           <span className="muted">{msg}</span>
         </div>
+        </fieldset>
       </form>
     </>
   );
