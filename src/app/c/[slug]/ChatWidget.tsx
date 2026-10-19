@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import MessageList from "@/components/MessageList";
 import { APP_NAME } from "@/lib/brand";
-import { LEFT_FLYERS, RIGHT_FLYERS, type Flyer } from "@/lib/promos";
+import { ASSISTANT_FLYER, SOLUTIONS, SOLUTIONS_KICKER, type Flyer } from "@/lib/promos";
 import type { Message } from "@/lib/db";
 
 const POLL_MS = 3000;
@@ -90,7 +90,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
 
   return (
     <div className="chat-page">
-      <PromoSide items={LEFT_FLYERS} />
+      <aside className="promo-side" aria-label="Kaizen"><FlyerCard flyer={ASSISTANT_FLYER} /></aside>
       <div className="chat">
         <header className="chat-header row">
           <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
@@ -127,34 +127,54 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
           </>
         )}
       </div>
-      <PromoSide items={RIGHT_FLYERS} />
+      <aside className="promo-side" aria-label={SOLUTIONS_KICKER}><SolutionsFlyer /></aside>
     </div>
   );
 }
 
-/** Columna lateral de flyers que solo aparece en pantallas anchas (ver .promo-side en globals.css). */
-function PromoSide({ items }: { items: Flyer[] }) {
+/** Flyer fijo de los costados (solo se ven en pantallas anchas, ver .promo-side en globals.css). */
+function FlyerCard({ flyer: f }: { flyer: Flyer }) {
+  if (f.image) return <img src={f.image} alt={f.title} className="flyer flyer-img" />;
   return (
-    <aside className="promo-side" aria-label="Kaizen">
-      {items.map((f) =>
-        f.image ? (
-          <img key={f.title} src={f.image} alt={f.title} className="flyer flyer-img" />
-        ) : (
-          <div key={f.title} className={`flyer flyer-${f.style}`}>
-            {f.art === "logo" && <img src="/kaizen-logo.png" alt="" className="flyer-logo" />}
-            <p className="flyer-kicker">{f.kicker}</p>
-            <h3 className="flyer-title">{f.title}</h3>
-            {f.text && <p className="flyer-text">{f.text}</p>}
-            {f.art === "chat" && (
-              <div className="flyer-chat" aria-hidden="true">
-                <span>¿Tienen turnos para mañana?</span>
-                <span>¡Sí! Te paso los horarios libres.</span>
-              </div>
-            )}
-            {f.cta && <span className="flyer-cta">{f.cta} →</span>}
-          </div>
-        ),
+    <div className={`flyer flyer-${f.style}`}>
+      {f.art === "logo" && <img src="/kaizen-logo.png" alt="" className="flyer-logo" />}
+      <p className="flyer-kicker">{f.kicker}</p>
+      <h3 className="flyer-title">{f.title}</h3>
+      {f.text && <p className="flyer-text">{f.text}</p>}
+      {f.art === "chat" && (
+        <div className="flyer-chat" aria-hidden="true">
+          <span>¿Tienen turnos para mañana?</span>
+          <span>¡Sí! Te paso los horarios libres.</span>
+        </div>
       )}
-    </aside>
+      {f.cta && <span className="flyer-cta">{f.cta} →</span>}
+    </div>
+  );
+}
+
+/** Flyer que va mostrando de a una las soluciones de Kaizen; se puede elegir con los puntitos. */
+function SolutionsFlyer() {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (paused || SOLUTIONS.length < 2) return;
+    const t = setInterval(() => setI((n) => (n + 1) % SOLUTIONS.length), 5000);
+    return () => clearInterval(t);
+  }, [paused]);
+  const s = SOLUTIONS[i];
+  return (
+    <div className="flyer flyer-dark flyer-rotating" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <p className="flyer-kicker">{SOLUTIONS_KICKER}</p>
+      <div key={i} className="flyer-slide" aria-live="polite">
+        <span className="flyer-num">{String(i + 1).padStart(2, "0")}</span>
+        <h3 className="flyer-title">{s.title}</h3>
+        <p className="flyer-text">{s.text}</p>
+      </div>
+      <div className="flyer-dots">
+        {SOLUTIONS.map((x, n) => (
+          <button key={x.title} type="button" aria-label={x.title} aria-current={n === i} onClick={() => setI(n)} />
+        ))}
+      </div>
+    </div>
   );
 }
