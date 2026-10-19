@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Field = { name: string; label: string; type?: string; placeholder?: string; hint?: string };
+type Field = { name: string; label: string; type?: string; placeholder?: string; hint?: string; value?: string };
 
-export default function AuthForm({ endpoint, fields, submit }: { endpoint: string; fields: Field[]; submit: string }) {
+export default function AuthForm({ endpoint, fields, submit, done }: { endpoint: string; fields: Field[]; submit: string; done?: string }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -18,13 +19,18 @@ export default function AuthForm({ endpoint, fields, submit }: { endpoint: strin
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) return setError(data.error ?? "Algo salió mal");
+    if (done) return setSent(true);
     router.push("/admin");
     router.refresh();
   }
 
+  if (sent) return <p>{done}</p>;
+
   return (
     <form onSubmit={onSubmit}>
-      {fields.map((f) => (
+      {fields.map((f) => f.type === "hidden" ? (
+        <input key={f.name} name={f.name} type="hidden" defaultValue={f.value} />
+      ) : (
         <div key={f.name}>
           <label htmlFor={f.name}>{f.label}</label>
           <input id={f.name} name={f.name} type={f.type ?? "text"} placeholder={f.placeholder} required />

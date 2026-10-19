@@ -14,6 +14,7 @@ export default function Login() {
             { name: "password", label: "Contraseña", type: "password" },
           ]}
         />
+        <p className="muted"><Link href="/forgot">¿Olvidaste tu contraseña?</Link></p>
         <p className="muted">¿No tienes cuenta? <Link href="/signup">Crea tu negocio</Link></p>
       </div>
     </main>
