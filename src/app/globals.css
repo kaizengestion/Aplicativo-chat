@@ -29,10 +29,11 @@
 html, body { margin: 0; height: 100%; }
 /*
   Tamaño que se adapta a la pantalla: todas las medidas están en rem, así que crecen junto con esta base.
-  Celular y notebook quedan en el tamaño normal (16px); en monitores grandes la base sube de a poco
-  (≈19px a 1920px de ancho, tope 21px) para que no se vea todo chiquito.
+  Celular y notebook quedan en el tamaño normal (16px). En pantallas más grandes todo crece en proporción,
+  como si fuera la notebook agrandada (≈21px a 1920px, ≈28px a 2560px, tope 32px). El límite por alto
+  evita que en monitores muy anchos y bajos el contenido quede enorme.
 */
-html { font-size: clamp(100%, calc(0.625vw + 7px), 131.25%); }
+html { font-size: clamp(100%, min(1.1111vw, 2.3vh), 200%); }
 body { background: var(--bg); color: var(--text); font: 0.9375rem/1.5 var(--font-body); }
 a { color: var(--accent); }
 h1, h2, h3 { line-height: 1.2; margin: 0 0 0.75rem; }
@@ -79,6 +80,23 @@ button:disabled { opacity: .6; cursor: default; }
 .bubble .who { display: block; font-size: 0.75rem; font-weight: 600; opacity: .75; margin-bottom: 2px; }
 .sys { align-self: center; font-size: 0.75rem; color: var(--muted); }
 .typing { align-self: flex-start; color: var(--muted); font-size: 0.8125rem; }
+
+/* Costados del chat público en PC: flyers de Kaizen y trabajos hechos (contenido en src/lib/promos.ts) */
+.promo-side { display: none; }
+@media (min-width: 1280px) {
+  .chat-page { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 45rem) minmax(0, 1fr); height: 100dvh; }
+  .chat-page .chat { width: 100%; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .promo-side { display: flex; flex-direction: column; justify-content: center; gap: 1rem; padding: 1.5rem; overflow-y: auto; }
+  .promo-side > * { width: 100%; max-width: 19rem; margin: 0 auto; }
+}
+.promo-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 auto; }
+.promo-card { background: var(--panel); border: 1px solid var(--border); border-radius: 0.875rem; overflow: hidden; }
+.promo-card img { display: block; width: 100%; height: auto; }
+.promo-card .promo-text { padding: 0.875rem 1rem; }
+.promo-card h3 { font-size: 0.9375rem; margin: 0 0 0.25rem; }
+.promo-card p { font-size: 0.8125rem; color: var(--muted); margin: 0; }
+.promo-card.flyer { border-top: 3px solid var(--accent); }
+.promo-card.flyer h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.125rem; }
 
 /* Admin */
 .admin { display: grid; grid-template-columns: 13.75rem 1fr; min-height: 100dvh; }

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import MessageList from "@/components/MessageList";
 import { APP_NAME } from "@/lib/brand";
+import { FLYERS, WORKS, type Promo } from "@/lib/promos";
 import type { Message } from "@/lib/db";
 
 const POLL_MS = 3000;
@@ -88,41 +89,64 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
   if (!ready) return null;
 
   return (
-    <div className="chat">
-      <header className="chat-header row">
-        <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
-        <div>
-          <strong>{APP_NAME}</strong>
-          <div className="muted" style={{ fontSize: "0.8125rem" }}>{businessName} · Atiende {botName}</div>
-        </div>
-      </header>
-
-      {!token ? (
-        <div className="chat-body">
-          <div className="bubble them">{welcome}</div>
-          <form className="card" onSubmit={start} style={{ marginTop: "0.75rem" }}>
-            <p style={{ marginTop: 0 }}>Para atenderte, déjanos tus datos:</p>
-            <label htmlFor="name">Nombre</label>
-            <input id="name" name="name" required autoComplete="name" />
-            <label htmlFor="phone">WhatsApp</label>
-            <input id="phone" name="phone" required inputMode="tel" autoComplete="tel" placeholder="+52 55 1234 5678" />
-            {error && <p className="error">{error}</p>}
-            <div style={{ marginTop: "0.875rem" }}><button className="primary">Empezar chat</button></div>
-          </form>
-        </div>
-      ) : (
-        <>
-          <MessageList messages={messages} perspective="contact" botName={botName} typing={sending} />
-          {error && <p className="error" style={{ padding: "0 1rem" }}>{error}</p>}
-          <form className="chat-input" onSubmit={send}>
-            <textarea
-              value={text} onChange={(e) => setText(e.target.value)} placeholder="Escribe tu mensaje" rows={1}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            />
-            <button className="primary" disabled={sending || !text.trim()}>Enviar</button>
-          </form>
-        </>
-      )}
+    <div className="chat-page">
+      <PromoSide title="Kaizen" items={FLYERS} flyer />
+      <div className="chat">
+        <header className="chat-header row">
+          <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
+          <div>
+            <strong>{APP_NAME}</strong>
+            <div className="muted" style={{ fontSize: "0.8125rem" }}>{businessName} · Atiende {botName}</div>
+          </div>
+        </header>
+  
+        {!token ? (
+          <div className="chat-body">
+            <div className="bubble them">{welcome}</div>
+            <form className="card" onSubmit={start} style={{ marginTop: "0.75rem" }}>
+              <p style={{ marginTop: 0 }}>Para atenderte, déjanos tus datos:</p>
+              <label htmlFor="name">Nombre</label>
+              <input id="name" name="name" required autoComplete="name" />
+              <label htmlFor="phone">WhatsApp</label>
+              <input id="phone" name="phone" required inputMode="tel" autoComplete="tel" placeholder="+52 55 1234 5678" />
+              {error && <p className="error">{error}</p>}
+              <div style={{ marginTop: "0.875rem" }}><button className="primary">Empezar chat</button></div>
+            </form>
+          </div>
+        ) : (
+          <>
+            <MessageList messages={messages} perspective="contact" botName={botName} typing={sending} />
+            {error && <p className="error" style={{ padding: "0 1rem" }}>{error}</p>}
+            <form className="chat-input" onSubmit={send}>
+              <textarea
+                value={text} onChange={(e) => setText(e.target.value)} placeholder="Escribe tu mensaje" rows={1}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              />
+              <button className="primary" disabled={sending || !text.trim()}>Enviar</button>
+            </form>
+          </>
+        )}
+      </div>
+      <PromoSide title="Trabajos realizados" items={WORKS} />
     </div>
+  );
+}
+
+/** Columna lateral que solo aparece en pantallas anchas (ver .promo-side en globals.css). */
+function PromoSide({ title, items, flyer }: { title: string; items: Promo[]; flyer?: boolean }) {
+  if (items.length === 0) return <aside className="promo-side" />;
+  return (
+    <aside className="promo-side" aria-label={title}>
+      <p className="promo-title">{title}</p>
+      {items.map((p) => (
+        <div key={p.title} className={flyer ? "promo-card flyer" : "promo-card"}>
+          {p.image && <img src={p.image} alt="" />}
+          <div className="promo-text">
+            <h3>{p.title}</h3>
+            <p>{p.text}</p>
+          </div>
+        </div>
+      ))}
+    </aside>
   );
 }
