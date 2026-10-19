@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import MessageList from "@/components/MessageList";
+import { APP_NAME } from "@/lib/brand";
 import type { Message } from "@/lib/db";
 
 const POLL_MS = 3000;
@@ -88,9 +89,12 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
 
   return (
     <div className="chat">
-      <header className="chat-header">
-        <strong>{businessName}</strong>
-        <div className="muted" style={{ fontSize: 13 }}>Atiende {botName}</div>
+      <header className="chat-header row">
+        <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
+        <div>
+          <strong>{APP_NAME}</strong>
+          <div className="muted" style={{ fontSize: 13 }}>{businessName} · Atiende {botName}</div>
+        </div>
       </header>
 
       {!token ? (

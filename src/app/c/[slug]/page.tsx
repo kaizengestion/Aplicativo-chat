@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { publicTenant } from "@/lib/db";
+import { APP_NAME } from "@/lib/brand";
 import ChatWidget from "./ChatWidget";
 
 export const dynamic = "force-dynamic";
@@ -7,10 +8,10 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   try {
     const tenant = await publicTenant((await params).slug);
-    return { title: tenant ? `Chat con ${tenant.name}` : "Chat" };
+    return { title: tenant ? `${APP_NAME} · ${tenant.name}` : APP_NAME };
   } catch (e) {
     console.error("Error al generar metadata del chat", e);
-    return { title: "Chat" };
+    return { title: APP_NAME };
   }
 }
 
