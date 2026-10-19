@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { publicTenant } from "@/lib/db";
 import { APP_NAME } from "@/lib/brand";
+import KaizenBackdrop from "@/components/KaizenBackdrop";
 import ChatWidget from "./ChatWidget";
 
 export const dynamic = "force-dynamic";
@@ -19,5 +20,10 @@ export default async function PublicChat({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const tenant = await publicTenant(slug);
   if (!tenant) notFound();
-  return <ChatWidget slug={slug} businessName={tenant.name} botName={tenant.bot_name} welcome={tenant.welcome_message} />;
+  return (
+    <>
+      <KaizenBackdrop />
+      <ChatWidget slug={slug} businessName={tenant.name} botName={tenant.bot_name} welcome={tenant.welcome_message} />
+    </>
+  );
 }
