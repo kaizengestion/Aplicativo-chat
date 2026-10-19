@@ -19,16 +19,23 @@ export async function notifyHandoff(tenantId: string, conversationId: string, re
   const subject = `${info.contact_name} necesita atención de una persona`;
   const text = `${info.contact_name} (${info.contact_phone}) necesita que alguien de ${info.tenant_name} siga la conversación.\n\nMotivo: ${reason}\n\nAbrir chat: ${link}`;
 
+  if (info.emails.length === 0) return;
+  await sendEmail(info.emails, subject, text);
+}
+
+/** Envía un correo con Resend. Devuelve false si no está configurado o falló (el detalle queda en el log). */
+export async function sendEmail(to: string[], subject: string, text: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFY_FROM;
-  if (!key || !from || info.emails.length === 0) {
-    console.log(`[aviso] ${subject} — ${link}`);
-    return;
+  if (!key || !from) {
+    console.log(`[correo sin enviar: falta RESEND_API_KEY o NOTIFY_FROM] ${subject}`);
+    return false;
   }
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-    body: JSON.stringify({ from, to: info.emails, subject, text }),
+    body: JSON.stringify({ from, to, subject, text }),
   });
-  if (!res.ok) console.error("No se pudo enviar el aviso por correo", res.status, await res.text());
+  if (!res.ok) console.error("No se pudo enviar el correo", res.status, await res.text());
+  return res.ok;
 }
