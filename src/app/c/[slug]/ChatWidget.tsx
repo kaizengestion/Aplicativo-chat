@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import MessageList from "@/components/MessageList";
 import { APP_NAME } from "@/lib/brand";
-import { FLYERS, WORKS, type Promo } from "@/lib/promos";
+import { LEFT_FLYERS, RIGHT_FLYERS, type Flyer } from "@/lib/promos";
 import type { Message } from "@/lib/db";
 
 const POLL_MS = 3000;
@@ -90,7 +90,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
 
   return (
     <div className="chat-page">
-      <PromoSide title="Kaizen" items={FLYERS} flyer />
+      <PromoSide items={LEFT_FLYERS} />
       <div className="chat">
         <header className="chat-header row">
           <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
@@ -127,26 +127,34 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
           </>
         )}
       </div>
-      <PromoSide title="Trabajos realizados" items={WORKS} />
+      <PromoSide items={RIGHT_FLYERS} />
     </div>
   );
 }
 
-/** Columna lateral que solo aparece en pantallas anchas (ver .promo-side en globals.css). */
-function PromoSide({ title, items, flyer }: { title: string; items: Promo[]; flyer?: boolean }) {
-  if (items.length === 0) return <aside className="promo-side" />;
+/** Columna lateral de flyers que solo aparece en pantallas anchas (ver .promo-side en globals.css). */
+function PromoSide({ items }: { items: Flyer[] }) {
   return (
-    <aside className="promo-side" aria-label={title}>
-      <p className="promo-title">{title}</p>
-      {items.map((p) => (
-        <div key={p.title} className={flyer ? "promo-card flyer" : "promo-card"}>
-          {p.image && <img src={p.image} alt="" />}
-          <div className="promo-text">
-            <h3>{p.title}</h3>
-            <p>{p.text}</p>
+    <aside className="promo-side" aria-label="Kaizen">
+      {items.map((f) =>
+        f.image ? (
+          <img key={f.title} src={f.image} alt={f.title} className="flyer flyer-img" />
+        ) : (
+          <div key={f.title} className={`flyer flyer-${f.style}`}>
+            {f.art === "logo" && <img src="/kaizen-logo.png" alt="" className="flyer-logo" />}
+            <p className="flyer-kicker">{f.kicker}</p>
+            <h3 className="flyer-title">{f.title}</h3>
+            {f.text && <p className="flyer-text">{f.text}</p>}
+            {f.art === "chat" && (
+              <div className="flyer-chat" aria-hidden="true">
+                <span>¿Tienen turnos para mañana?</span>
+                <span>¡Sí! Te paso los horarios libres.</span>
+              </div>
+            )}
+            {f.cta && <span className="flyer-cta">{f.cta} →</span>}
           </div>
-        </div>
-      ))}
+        ),
+      )}
     </aside>
   );
 }

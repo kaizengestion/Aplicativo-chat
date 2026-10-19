@@ -1,24 +1,48 @@
 /**
- * Lo que se muestra a los costados del chat público cuando se abre en una pantalla de PC.
- * Para cambiar un flyer o un trabajo, editá esta lista. Las imágenes van en /public/promos/
- * y se ponen como image: "/promos/archivo.jpg" (si no hay imagen, se muestra solo el texto).
+ * Flyers que se muestran a los costados del chat público cuando se abre en una pantalla de PC.
+ * Para cambiar uno, editá esta lista. style elige el diseño: "red" (fondo rojo), "paper" (fondo claro)
+ * o "dark" (fondo oscuro con franja roja). art agrega un dibujo: "logo" o "chat".
+ * Si tenés el flyer como imagen, ponela en /public/promos/ y usá image: "/promos/archivo.jpg" (reemplaza el diseño).
  */
-export type Promo = { title: string; text: string; image?: string };
+export type Flyer = {
+  kicker: string;
+  title: string;
+  text?: string;
+  cta?: string;
+  style: "red" | "paper" | "dark";
+  art?: "logo" | "chat";
+  image?: string;
+};
 
-export const FLYERS: Promo[] = [
+export const LEFT_FLYERS: Flyer[] = [
   {
-    title: "Kaizen Gestión",
-    text: "Mejora continua para tu negocio. Escribinos por este chat y te ayudamos.",
+    kicker: "Kaizen Gestión",
+    title: "Mejora continua para tu negocio",
+    text: "Escribinos y te ayudamos a que tu negocio crezca.",
+    cta: "Consultanos acá",
+    style: "red",
+    art: "logo",
   },
   {
-    title: "¿Querés un chat como este?",
-    text: "Atendé a tus clientes al instante desde el enlace de tu WhatsApp, con un asistente que conoce tu negocio.",
+    kicker: "Atención al instante",
+    title: "Respuestas las 24 horas",
+    text: "Tus clientes nunca se quedan esperando.",
+    style: "paper",
   },
 ];
 
-export const WORKS: Promo[] = [
+export const RIGHT_FLYERS: Flyer[] = [
   {
+    kicker: "Trabajo realizado",
     title: "Chat de ayuda con IA",
-    text: "Este mismo chat: responde a los clientes que llegan desde WhatsApp y deja todo en un tablero.",
+    text: "Este mismo chat: atiende a los clientes que llegan desde WhatsApp y deja todo en un tablero.",
+    style: "dark",
+    art: "chat",
+  },
+  {
+    kicker: "¿Lo querés para tu negocio?",
+    title: "Un chat como este, con tu marca",
+    cta: "Pedilo por este chat",
+    style: "red",
   },
 ];
