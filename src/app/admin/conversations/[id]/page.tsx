@@ -79,16 +79,16 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       </div>
       <aside className="card" style={{ alignSelf: "start" }}>
         <h3>Contacto</h3>
-        <p style={{ margin: "4px 0" }}><strong>{conv.contact_name}</strong></p>
-        <p style={{ margin: "4px 0" }}>
+        <p style={{ margin: "0.25rem 0" }}><strong>{conv.contact_name}</strong></p>
+        <p style={{ margin: "0.25rem 0" }}>
           <a href={`https://wa.me/${conv.contact_phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">{conv.contact_phone}</a>
         </p>
-        {conv.contact_email && <p style={{ margin: "4px 0" }}>{conv.contact_email}</p>}
-        <p className="muted" style={{ fontSize: 13 }}>Inició {new Date(conv.created_at).toLocaleString()}</p>
+        {conv.contact_email && <p style={{ margin: "0.25rem 0" }}>{conv.contact_email}</p>}
+        <p className="muted" style={{ fontSize: "0.8125rem" }}>Inició {new Date(conv.created_at).toLocaleString()}</p>
         {conv.needs_human && conv.handoff_reason && (
           <p className="badge warn" style={{ whiteSpace: "normal" }}>Motivo: {conv.handoff_reason}</p>
         )}
-        <h3 style={{ marginTop: 18 }}>Control</h3>
+        <h3 style={{ marginTop: "1.125rem" }}>Control</h3>
         {conv.assigned_name && conv.status === "human" && <p className="muted">Atiende {conv.assigned_name}</p>}
         <div className="row">
           {conv.status !== "human" && <button className="primary" disabled={busy} onClick={() => setStatus("human")}>Tomar conversación</button>}
