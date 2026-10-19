@@ -15,7 +15,7 @@ export default async function Contacts() {
 
   return (
     <>
-      <div className="row" style={{ marginBottom: 14 }}>
+      <div className="row" style={{ marginBottom: "0.875rem" }}>
         <h1 style={{ margin: 0 }}>Contactos</h1>
         <div className="spacer" />
         <a className="btn" href="/api/admin/contacts">Exportar CSV</a>

@@ -34,7 +34,7 @@ export default function TeamManager({ members, me }: { members: Member[]; me: st
   return (
     <>
       <h1>Equipo</h1>
-      <div className="card" style={{ padding: 0, overflowX: "auto", marginBottom: 16 }}>
+      <div className="card" style={{ padding: 0, overflowX: "auto", marginBottom: "1rem" }}>
         <table>
           <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Atendiendo</th><th></th></tr></thead>
           <tbody>
@@ -64,7 +64,7 @@ export default function TeamManager({ members, me }: { members: Member[]; me: st
           <option value="agent">Agente</option>
           <option value="admin">Administrador</option>
         </select>
-        <div className="row" style={{ marginTop: 14 }}>
+        <div className="row" style={{ marginTop: "0.875rem" }}>
           <button className="primary" disabled={busy}>Agregar</button>
           <span className="muted">{msg}</span>
         </div>

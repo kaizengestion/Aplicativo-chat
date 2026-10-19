@@ -47,15 +47,15 @@ export default function Ask() {
         <input style={{ flex: 1, width: "auto" }} value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="¿Qué te gustaría saber?" />
         <button className="primary" disabled={busy}>{busy ? "Consultando…" : "Preguntar"}</button>
       </form>
-      <div className="row" style={{ marginTop: 10 }}>
-        {EXAMPLES.map((e) => <button key={e} type="button" onClick={() => ask(e)} disabled={busy} style={{ fontSize: 13 }}>{e}</button>)}
+      <div className="row" style={{ marginTop: "0.625rem" }}>
+        {EXAMPLES.map((e) => <button key={e} type="button" onClick={() => ask(e)} disabled={busy} style={{ fontSize: "0.8125rem" }}>{e}</button>)}
       </div>
       {error && <p className="error">{error}</p>}
       {result && (
-        <div className="card" style={{ marginTop: 16 }}>
+        <div className="card" style={{ marginTop: "1rem" }}>
           <Answer text={result.answer} />
           {result.queries.length > 0 && (
-            <details style={{ marginTop: 14 }}>
+            <details style={{ marginTop: "0.875rem" }}>
               <summary className="muted">Consultas ejecutadas ({result.queries.length})</summary>
               {result.queries.map((q, i) => (
                 <pre key={i} className="sql">{q.query}{"\n"}→ {q.error ? `error: ${q.error}` : `${q.rows} filas`}</pre>

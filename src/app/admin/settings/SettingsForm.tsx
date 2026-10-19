@@ -25,12 +25,12 @@ export default function SettingsForm({ tenant, link, canEdit }: { tenant: Tenant
   return (
     <>
       <h1>Bot y enlace</h1>
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card" style={{ marginBottom: "1rem" }}>
         <h3>Enlace para la respuesta automática de WhatsApp</h3>
         <p><a href={link} target="_blank" rel="noreferrer">{link}</a></p>
         <label htmlFor="autoreply">Texto sugerido (WhatsApp Business → Herramientas → Mensaje de bienvenida / ausencia)</label>
         <textarea id="autoreply" readOnly value={autoReply} rows={3} />
-        <div style={{ marginTop: 10 }}><button type="button" onClick={copy}>{copied ? "Copiado" : "Copiar texto"}</button></div>
+        <div style={{ marginTop: "0.625rem" }}><button type="button" onClick={copy}>{copied ? "Copiado" : "Copiar texto"}</button></div>
       </div>
       <form className="card" onSubmit={save}>
         <h3>Configuración del bot</h3>
@@ -47,7 +47,7 @@ export default function SettingsForm({ tenant, link, canEdit }: { tenant: Tenant
           id="knowledge_base" name="knowledge_base" defaultValue={tenant.knowledge_base} rows={14}
           placeholder={"Horarios, ubicación, productos y precios, envíos, formas de pago, políticas de cambio, preguntas frecuentes…"}
         />
-        <div className="row" style={{ marginTop: 14 }}>
+        <div className="row" style={{ marginTop: "0.875rem" }}>
           <button className="primary">Guardar</button>
           <span className="muted">{msg}</span>
         </div>

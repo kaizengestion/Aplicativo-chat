@@ -38,7 +38,7 @@ export default function AuthForm({ endpoint, fields, submit, done }: { endpoint:
         </div>
       ))}
       {error && <p className="error">{error}</p>}
-      <div style={{ marginTop: 18 }}>
+      <div style={{ marginTop: "1.125rem" }}>
         <button className="primary" disabled={busy}>{busy ? "Un momento…" : submit}</button>
       </div>
     </form>

@@ -27,18 +27,18 @@ export default function Conversations() {
   return (
     <>
       <h1>Conversaciones</h1>
-      <div className="row" style={{ marginBottom: 14 }}>
+      <div className="row" style={{ marginBottom: "0.875rem" }}>
         <div className="tabs">
           {FILTERS.map(([k, label]) => (
             <button key={k} className={filter === k ? "active" : ""} onClick={() => setFilter(k)}>{label}</button>
           ))}
         </div>
         <div className="spacer" />
-        <input style={{ maxWidth: 260 }} placeholder="Buscar por nombre o teléfono" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input style={{ maxWidth: "16.25rem" }} placeholder="Buscar por nombre o teléfono" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       <div className="card" style={{ padding: 0 }}>
-        {rows === null ? <p className="muted" style={{ padding: 16 }}>Cargando…</p> :
-          rows.length === 0 ? <p className="muted" style={{ padding: 16 }}>No hay conversaciones todavía. Comparte tu enlace desde “Bot y enlace”.</p> :
+        {rows === null ? <p className="muted" style={{ padding: "1rem" }}>Cargando…</p> :
+          rows.length === 0 ? <p className="muted" style={{ padding: "1rem" }}>No hay conversaciones todavía. Comparte tu enlace desde “Bot y enlace”.</p> :
           <div className="list">
             {rows.map((c) => (
               <Link key={c.id} href={`/admin/conversations/${c.id}`}>
@@ -47,7 +47,7 @@ export default function Conversations() {
                   <span className="muted">{c.contact_phone}</span>
                   <div className="spacer" />
                   <StatusBadge status={c.status} needsHuman={c.needs_human} />
-                  <span className="muted" style={{ fontSize: 13 }}>{new Date(c.last_message_at).toLocaleString()}</span>
+                  <span className="muted" style={{ fontSize: "0.8125rem" }}>{new Date(c.last_message_at).toLocaleString()}</span>
                 </div>
                 <div className="preview">
                   {c.last_sender === "contact" ? "" : c.last_sender === "bot" ? "Bot: " : c.last_sender === "agent" ? `${c.assigned_name ?? "Equipo"}: ` : ""}
