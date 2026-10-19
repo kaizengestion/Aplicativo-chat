@@ -11,7 +11,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="admin">
       <nav className="sidebar">
-        <strong style={{ padding: "4px 10px 12px" }}>Tablero</strong>
+        <Link href="/admin" className="brand">KAIZEN</Link>
+        <strong style={{ padding: "0 10px 12px" }}>Tablero</strong>
         <Link href="/admin">Conversaciones</Link>
         <Link href="/admin/contacts">Contactos</Link>
         <Link href="/admin/ask">Preguntar</Link>

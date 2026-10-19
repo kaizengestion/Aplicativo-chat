@@ -1,20 +1,35 @@
+/*
+  Colores y tipografías de Kaizen (brand pack: 02-paleta-tipografia).
+  Todo el color de la app sale de estas variables: para cambiar la marca, tocá solo este bloque.
+  Regla de marca: rojo para acentos y CTAs, el resto tinta + papel + grises.
+*/
 :root {
-  --bg: #f6f7f9; --panel: #fff; --text: #16181d; --muted: #667085; --border: #e4e7ec;
-  --accent: #0f766e; --accent-soft: #e6f4f1; --warn: #b54708; --warn-soft: #fef0c7;
-  --bubble-me: #0f766e; --bubble-me-text: #fff; --bubble-them: #fff; --agent: #4338ca; --agent-soft: #eef2ff;
+  --font-body: var(--font-manrope), "Manrope", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-archivo-black), "Archivo Black", Impact, sans-serif;
+
+  --bg: #fcfbf8; --panel: #fff; --text: #1a1816; --muted: #6b6560; --border: #dddddd;
+  --accent: #cc0000; --accent-soft: #fbeded;
+  --primary: #cc0000; --primary-hover: #a30a1b; --on-primary: #fff;
+  --neutral-soft: #f1efea;
+  --warn: #a30a1b; --warn-soft: #fbeded; --danger: #cc0000;
+  --bubble-me: #1a1816; --bubble-me-text: #fcfbf8; --bubble-them: #fff; --agent: #1a1816; --agent-soft: #f1efea;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1115; --panel: #171a21; --text: #e8eaed; --muted: #98a2b3; --border: #2a2f3a;
-    --accent: #2dd4bf; --accent-soft: #10302c; --warn: #fdb022; --warn-soft: #3a2a0c;
-    --bubble-me: #134e48; --bubble-me-text: #e8eaed; --bubble-them: #1f2430; --agent: #a5b4fc; --agent-soft: #1e1b4b;
+    --bg: #181615; --panel: #211e1c; --text: #f5f2ec; --muted: #a39e98; --border: #36322f;
+    --accent: #e8364a; --accent-soft: #3a1a1c;
+    --neutral-soft: #2b2725;
+    --warn: #ff8a95; --warn-soft: #3a1a1c; --danger: #ff6b78;
+    --bubble-me: #f5f2ec; --bubble-me-text: #181615; --bubble-them: #211e1c; --agent: #f5f2ec; --agent-soft: #2b2725;
   }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--font-body); }
 a { color: var(--accent); }
 h1, h2, h3 { line-height: 1.2; margin: 0 0 12px; }
+h1, h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; }
+.brand { font-family: var(--font-display); color: var(--accent); letter-spacing: 0.02em; text-decoration: none; }
 input, textarea, select, button { font: inherit; color: inherit; }
 input, textarea, select {
   width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
@@ -25,24 +40,25 @@ button, .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--panel); cursor: pointer; text-decoration: none; color: var(--text); font-weight: 500;
 }
-button.primary, .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-@media (prefers-color-scheme: dark) { button.primary, .btn.primary { color: #0f1115; } }
+button.primary, .btn.primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+button.primary:hover:not(:disabled), .btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 button:disabled { opacity: .6; cursor: default; }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
 .muted { color: var(--muted); }
-.error { color: #d92d20; margin-top: 10px; }
+.error { color: var(--danger); margin-top: 10px; }
 .center-page { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; }
 .narrow { width: 100%; max-width: 420px; }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .spacer { flex: 1; }
-.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
-.badge.human { background: var(--agent-soft); color: var(--agent); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--neutral-soft); color: var(--text); }
+.badge.human { background: var(--text); color: var(--bg); }
 .badge.closed { background: var(--border); color: var(--muted); }
 .badge.warn { background: var(--warn-soft); color: var(--warn); }
 
 /* Chat */
 .chat { display: flex; flex-direction: column; height: 100dvh; max-width: 720px; margin: 0 auto; background: var(--bg); }
-.chat-header { padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
+.chat-header { padding: 14px 16px; border-top: 3px solid var(--accent); border-bottom: 1px solid var(--border); background: var(--panel); }
 .chat-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 .chat-input { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--panel); }
 .chat-input textarea { min-height: 44px; max-height: 140px; }
@@ -58,11 +74,13 @@ button:disabled { opacity: .6; cursor: default; }
 .admin { display: grid; grid-template-columns: 220px 1fr; min-height: 100dvh; }
 .sidebar { border-right: 1px solid var(--border); background: var(--panel); padding: 18px 14px; display: flex; flex-direction: column; gap: 4px; }
 .sidebar a { padding: 8px 10px; border-radius: 8px; text-decoration: none; color: var(--text); }
-.sidebar a:hover { background: var(--bg); }
+.sidebar a:hover { background: var(--neutral-soft); }
+.sidebar a.brand { font-size: 22px; padding: 4px 10px 2px; color: var(--accent); }
+.sidebar a.brand:hover { background: none; }
 .main { padding: 24px; min-width: 0; }
 .list { display: flex; flex-direction: column; }
 .list a { display: block; padding: 12px 14px; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); }
-.list a:hover { background: var(--bg); }
+.list a:hover { background: var(--neutral-soft); }
 .preview { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
