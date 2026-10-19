@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import AutoGrowTextarea from "@/components/AutoGrowTextarea";
 import MessageList from "@/components/MessageList";
 import { APP_NAME } from "@/lib/brand";
 import { LEFT_FLYERS, RIGHT_FLYERS, type Flyer } from "@/lib/promos";
@@ -118,7 +119,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
             <MessageList messages={messages} perspective="contact" botName={botName} typing={sending} />
             {error && <p className="error" style={{ padding: "0 1rem" }}>{error}</p>}
             <form className="chat-input" onSubmit={send}>
-              <textarea
+              <AutoGrowTextarea
                 value={text} onChange={(e) => setText(e.target.value)} placeholder="Escribe tu mensaje" rows={1}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
               />
