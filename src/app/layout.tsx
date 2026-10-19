@@ -10,10 +10,8 @@ export const metadata: Metadata = { title: "Chat de atención", description: "Ch
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fcfbf8" },
-    { media: "(prefers-color-scheme: dark)", color: "#181615" },
-  ],
+  themeColor: "#181615",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

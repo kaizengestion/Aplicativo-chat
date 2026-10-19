@@ -6,22 +6,24 @@
 :root {
   --font-body: var(--font-manrope), "Manrope", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-archivo-black), "Archivo Black", Impact, sans-serif;
+  color-scheme: dark;
 
+  /* Modo oscuro de marca: es el tema de la app para todos, sin importar el dispositivo. */
+  --bg: #181615; --panel: #211e1c; --text: #f5f2ec; --muted: #a39e98; --border: #36322f;
+  --accent: #e8364a; --accent-soft: #3a1a1c;
+  --primary: #cc0000; --primary-hover: #a30a1b; --on-primary: #fff;
+  --neutral-soft: #2b2725;
+  --warn: #ff8a95; --warn-soft: #3a1a1c; --danger: #ff6b78;
+  --bubble-me: #f5f2ec; --bubble-me-text: #181615; --bubble-them: #211e1c; --agent: #f5f2ec; --agent-soft: #2b2725;
+}
+/* Versión clara de marca, por si algún día se quiere volver a usar: poner data-theme="light" en <html>. */
+:root[data-theme="light"] {
+  color-scheme: light;
   --bg: #fcfbf8; --panel: #fff; --text: #1a1816; --muted: #6b6560; --border: #dddddd;
   --accent: #cc0000; --accent-soft: #fbeded;
-  --primary: #cc0000; --primary-hover: #a30a1b; --on-primary: #fff;
   --neutral-soft: #f1efea;
   --warn: #a30a1b; --warn-soft: #fbeded; --danger: #cc0000;
   --bubble-me: #1a1816; --bubble-me-text: #fcfbf8; --bubble-them: #fff; --agent: #1a1816; --agent-soft: #f1efea;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #181615; --panel: #211e1c; --text: #f5f2ec; --muted: #a39e98; --border: #36322f;
-    --accent: #e8364a; --accent-soft: #3a1a1c;
-    --neutral-soft: #2b2725;
-    --warn: #ff8a95; --warn-soft: #3a1a1c; --danger: #ff6b78;
-    --bubble-me: #f5f2ec; --bubble-me-text: #181615; --bubble-them: #211e1c; --agent: #f5f2ec; --agent-soft: #2b2725;
-  }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
