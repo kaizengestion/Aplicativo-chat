@@ -170,3 +170,11 @@ pre.sql { font-size: 0.75rem; background: var(--bg); padding: 0.5rem; border-rad
   .conv-view { grid-template-columns: 1fr; }
   .conv-view .chat { height: 70dvh; }
 }
+
+/*
+  Fondo generativo del chat público (src/components/KaizenBackdrop.tsx), el mismo estilo que las piezas
+  de Instagram. Va detrás de todo; la columna del chat le pone un velo del color de fondo para que los
+  mensajes se lean bien y el dibujo quede como textura. Aparece con un fundido cuando termina de pintarse.
+*/
+.kaizen-backdrop { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.8s ease; }
+.chat-page .chat { background: color-mix(in srgb, var(--bg) 82%, transparent); }
