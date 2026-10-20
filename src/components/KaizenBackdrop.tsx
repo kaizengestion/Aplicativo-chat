@@ -1,40 +1,18 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { DISENOS, type Lienzo } from "./backdrops";
 
 /*
-  Fondo generativo del chat público: «Deriva Incremental», el mismo motor que usa el bot de
-  imágenes de Instagram de Kaizen (kaizen-marketing, plantillas/fondo.js), con el carácter de la
-  rama «bots» (red y nodos).
-
-  - Nada se dibuja: se deposita. Miles de partículas recorren un campo de ruido y la imagen es la
-    densidad que dejan.
-  - El rojo no se coloca, se gana: un trazo es rojo solo donde el campo se tuerce más que el
-    percentil de esta semilla. Es la regla de marca «el rojo es acento, nunca relleno».
-  - Cada visita trae una semilla nueva, así que el fondo cambia pero siempre es de la misma familia.
+  Fondo generativo del chat público, con el estilo del bot de imágenes de Instagram de Kaizen.
+  Cada visita muestra uno de los diseños de backdrops.ts, distinto del de la visita anterior, con
+  una semilla nueva. Para ver uno en particular: /c/<negocio>?fondo=<nombre> (por ejemplo ?fondo=red).
 
   Colores: salen de las variables de globals.css (--bg, --text, --accent), así sigue al tema.
   Va detrás de todo (position: fixed, z-index -1) y el chat le pone encima un velo (.chat-page .chat).
 */
 
-const P = {
-  // Rama «bots» de fondo.js: pasos cortos y muchas partículas, textura de puntos que se conectan.
-  octavas: 4,
-  escalaRuido: 0.0019,
-  largoPaso: 1.5,
-  pasos: 170,
-  // 5200 partículas en el lienzo de 1536×2048 de Instagram; acá se escala al área de la pantalla.
-  particulasPorPixel: 5200 / (1536 * 2048),
-  percentilAcento: 0.9,
-  miradaAdelante: 16,
-  // Más tenue que en Instagram: acá el fondo acompaña, no es la pieza.
-  alfaTrazo: 0.075,
-  alfaAcento: 0.16,
-  mezclaGris: 0.28,
-  grosor: 1,
-};
 const GRIS_NODO = "201, 201, 201";
-// Partículas por cuadro: reparte el cálculo para no trabar la página mientras se pinta.
-const POR_CUADRO = 250;
+const ULTIMO = "kaizen-fondo-ultimo";
 
 export default function KaizenBackdrop() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -44,95 +22,43 @@ export default function KaizenBackdrop() {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const semilla = Math.floor(Math.random() * 2 ** 31);
+    const diseno = elegirDiseno();
     let cuadro = 0;
 
     function pintar() {
       cancelAnimationFrame(cuadro);
       const css = getComputedStyle(document.documentElement);
       const fondo = css.getPropertyValue("--bg").trim() || "#181615";
-      const trazo = rgb(css.getPropertyValue("--text").trim()) ?? "245, 242, 236";
-      const acento = rgb(css.getPropertyValue("--accent").trim()) ?? "232, 54, 74";
-
-      const ancho = window.innerWidth;
-      const alto = window.innerHeight;
-      canvas!.width = ancho;
-      canvas!.height = alto;
+      const W = window.innerWidth, H = window.innerHeight;
+      canvas!.width = W;
+      canvas!.height = H;
       canvas!.style.opacity = "0";
-
-      const azar = mulberry32(semilla);
-      const ruido = perlin(semilla);
-      const angulo = (x: number, y: number) => {
-        let v = 0, amplitud = 1, frecuencia = P.escalaRuido, total = 0;
-        for (let o = 0; o < P.octavas; o++) {
-          v += amplitud * ruido(x * frecuencia, y * frecuencia, o * 19.37);
-          total += amplitud;
-          amplitud *= 0.5;
-          frecuencia *= 2.1;
-        }
-        return (v / total) * Math.PI * 2 * 2.2;
-      };
-      const torsion = (x: number, y: number, a: number) =>
-        Math.abs(angulo(x + Math.cos(a) * P.miradaAdelante, y + Math.sin(a) * P.miradaAdelante) - a);
-
-      // Umbral de acento por percentil de esta semilla: así la proporción de rojo es estable.
-      const muestras: number[] = [];
-      for (let i = 0; i < 2000; i++) {
-        const x = azar() * ancho, y = azar() * alto;
-        muestras.push(torsion(x, y, angulo(x, y)));
-      }
-      muestras.sort((a, b) => a - b);
-      const umbral = muestras[Math.floor(muestras.length * P.percentilAcento)];
-
+      ctx!.setTransform(1, 0, 0, 1, 0, 0);
+      ctx!.globalAlpha = 1;
       ctx!.fillStyle = fondo;
-      ctx!.fillRect(0, 0, ancho, alto);
-      ctx!.lineWidth = P.grosor;
+      ctx!.fillRect(0, 0, W, H);
       ctx!.lineCap = "round";
       ctx!.lineJoin = "round";
 
-      const total = Math.round(ancho * alto * P.particulasPorPixel);
-      let hechas = 0;
-
-      // Cada partícula es una polilínea; se corta en tramos cuando cambia entre color base y rojo.
-      // Cada tramo es un trazo aparte, así las superposiciones acumulan tinta como en el original.
-      function tramo(puntos: number[], color: string) {
-        if (puntos.length < 4) return;
-        ctx!.strokeStyle = color;
-        ctx!.beginPath();
-        ctx!.moveTo(puntos[0], puntos[1]);
-        for (let i = 2; i < puntos.length; i += 2) ctx!.lineTo(puntos[i], puntos[i + 1]);
-        ctx!.stroke();
-      }
-
-      function lote() {
-        const fin = Math.min(total, hechas + POR_CUADRO);
-        for (; hechas < fin; hechas++) {
-          let x = azar() * ancho;
-          let y = azar() * alto;
-          const base = `rgba(${azar() < P.mezclaGris ? GRIS_NODO : trazo}, ${P.alfaTrazo})`;
-          const rojo = `rgba(${acento}, ${P.alfaAcento})`;
-          let puntos = [x, y];
-          let esRojo = false;
-          for (let paso = 0; paso < P.pasos; paso++) {
-            const a = angulo(x, y);
-            const nx = x + Math.cos(a) * P.largoPaso;
-            const ny = y + Math.sin(a) * P.largoPaso;
-            if (nx < 0 || nx > ancho || ny < 0 || ny > alto) break;
-            const ahoraRojo = torsion(x, y, a) > umbral;
-            if (ahoraRojo !== esRojo) {
-              tramo(puntos, esRojo ? rojo : base);
-              puntos = [x, y];
-              esRojo = ahoraRojo;
-            }
-            puntos.push(nx, ny);
-            x = nx;
-            y = ny;
-          }
-          tramo(puntos, esRojo ? rojo : base);
-        }
-        if (hechas < total) cuadro = requestAnimationFrame(lote);
-        else canvas!.style.opacity = "1";
-      }
-      cuadro = requestAnimationFrame(lote);
+      const lienzo: Lienzo = {
+        ctx: ctx!, W, H,
+        U: Math.max(0.7, Math.min(W, H) / 1080),
+        R: mulberry32(semilla),
+        ruido: perlin(semilla),
+        color: {
+          fondo: rgb(fondo) ?? "24, 22, 21",
+          trazo: rgb(css.getPropertyValue("--text").trim()) ?? "245, 242, 236",
+          linea: GRIS_NODO,
+          acento: rgb(css.getPropertyValue("--accent").trim()) ?? "232, 54, 74",
+        },
+      };
+      // El diseño puede repartir su trabajo en varios cuadros para no trabar la página.
+      const pasos = diseno.pintar(lienzo);
+      const seguir = () => {
+        if (pasos.next().done) canvas!.style.opacity = String(diseno.opacidad);
+        else cuadro = requestAnimationFrame(seguir);
+      };
+      cuadro = requestAnimationFrame(seguir);
     }
 
     pintar();
@@ -155,6 +81,19 @@ export default function KaizenBackdrop() {
   }, []);
 
   return <canvas ref={ref} className="kaizen-backdrop" aria-hidden="true" />;
+}
+
+/** El diseño de esta visita: el pedido en ?fondo=, o uno al azar distinto del de la visita anterior. */
+function elegirDiseno() {
+  const pedido = new URLSearchParams(window.location.search).get("fondo");
+  const elegido = DISENOS.find((d) => d.nombre === pedido);
+  if (elegido) return elegido;
+  let ultimo: string | null = null;
+  try { ultimo = localStorage.getItem(ULTIMO); } catch {}
+  const opciones = DISENOS.filter((d) => d.nombre !== ultimo);
+  const diseno = opciones[Math.floor(Math.random() * opciones.length)];
+  try { localStorage.setItem(ULTIMO, diseno.nombre); } catch {}
+  return diseno;
 }
 
 /** "#rrggbb" → "r, g, b" para armar rgba(). */
