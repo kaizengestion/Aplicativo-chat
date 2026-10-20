@@ -44,7 +44,7 @@ Postgres (Supabase)  ── RLS por tenant_id en todas las tablas
 2. **Migrar:** desde tu computadora, con `ADMIN_DATABASE_URL` y una `APP_DB_PASSWORD` nueva, corre `npm run db:migrate`. Eso crea las tablas y el rol `chat_app`.
 3. **`DATABASE_URL`:** la misma cadena del pooler pero con usuario `chat_app.<ref-del-proyecto>` y la clave `APP_DB_PASSWORD` (en Supabase el usuario del pooler lleva el sufijo del proyecto, igual que `postgres.<ref>`).
 4. **Claude:** crea una clave en https://platform.claude.com (*API keys*) y agrega saldo; esa es `ANTHROPIC_API_KEY`.
-5. **Vercel:** importa el repositorio en https://vercel.com, carga `DATABASE_URL`, `SESSION_SECRET`, `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_APP_URL` (y opcionalmente `RESEND_API_KEY` y `NOTIFY_FROM` para avisos, y `OPENAI_API_KEY` para transcribir audios) y despliega.
+5. **Vercel:** importa el repositorio en https://vercel.com, carga `DATABASE_URL`, `SESSION_SECRET`, `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_APP_URL` (y opcionalmente `RESEND_API_KEY` y `NOTIFY_FROM` para avisos, y `GROQ_API_KEY` —gratis— u `OPENAI_API_KEY` para transcribir audios) y despliega.
 
 Las claves van solo en las variables de entorno de Vercel; no hace falta compartirlas en ningún chat.
 

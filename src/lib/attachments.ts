@@ -36,19 +36,30 @@ export async function checkAttachmentLimit(tx: Tx, conversationId: string) {
   return r.n < MAX_ATTACHMENTS_PER_DAY;
 }
 
+// Groq (plan gratis, Whisper) o OpenAI: las dos usan la misma API de transcripción.
+function transcriber() {
+  if (process.env.GROQ_API_KEY) {
+    return { key: process.env.GROQ_API_KEY, url: "https://api.groq.com/openai/v1/audio/transcriptions", model: "whisper-large-v3-turbo" };
+  }
+  if (process.env.OPENAI_API_KEY) {
+    return { key: process.env.OPENAI_API_KEY, url: "https://api.openai.com/v1/audio/transcriptions", model: "gpt-4o-mini-transcribe" };
+  }
+  return null;
+}
+
 /**
- * Pasa un audio a texto con la API de transcripción de OpenAI (Claude no recibe audio).
- * Devuelve null si no hay OPENAI_API_KEY o si falla: el audio queda guardado igual.
+ * Pasa un audio a texto (Claude no recibe audio).
+ * Devuelve null si no hay GROQ_API_KEY ni OPENAI_API_KEY, o si falla: el audio queda guardado igual.
  */
 export async function transcribe(data: Buffer, mime: string, name: string): Promise<string | null> {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
+  const t = transcriber();
+  if (!t) return null;
   const form = new FormData();
   form.append("file", new Blob([new Uint8Array(data)], { type: mime.split(";")[0] }), name);
-  form.append("model", process.env.TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe");
+  form.append("model", process.env.TRANSCRIBE_MODEL || t.model);
   try {
-    const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST", headers: { authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(60_000),
+    const res = await fetch(t.url, {
+      method: "POST", headers: { authorization: `Bearer ${t.key}` }, body: form, signal: AbortSignal.timeout(60_000),
     });
     if (!res.ok) {
       console.error("Error al transcribir", res.status, await res.text().catch(() => ""));
