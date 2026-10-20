@@ -60,10 +60,25 @@ create table if not exists messages (
   created_at timestamptz not null default now()
 );
 
+-- Archivos que manda el cliente (imágenes, PDF, audios). Uno por mensaje; los bytes quedan en la base, aislados por tenant.
+create table if not exists attachments (
+  id uuid primary key default gen_random_uuid(),
+  tenant_id uuid not null references tenants(id) on delete cascade,
+  conversation_id uuid not null references conversations(id) on delete cascade,
+  message_id bigint not null unique references messages(id) on delete cascade,
+  kind text not null check (kind in ('image', 'pdf', 'audio')),
+  mime text not null,
+  name text not null,
+  size int not null,
+  data bytea not null,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists contacts_tenant_idx on contacts (tenant_id, last_seen_at desc);
 create index if not exists conversations_tenant_idx on conversations (tenant_id, last_message_at desc);
 create index if not exists messages_conv_idx on messages (conversation_id, id);
 create index if not exists messages_tenant_idx on messages (tenant_id, created_at desc);
+create index if not exists attachments_conv_idx on attachments (conversation_id, created_at);
 
 -- Row Level Security -------------------------------------------------------
 
@@ -82,6 +97,8 @@ alter table conversations enable row level security;
 alter table conversations force row level security;
 alter table messages enable row level security;
 alter table messages force row level security;
+alter table attachments enable row level security;
+alter table attachments force row level security;
 
 drop policy if exists tenant_isolation on tenants;
 create policy tenant_isolation on tenants
@@ -101,6 +118,10 @@ create policy tenant_isolation on conversations
 
 drop policy if exists tenant_isolation on messages;
 create policy tenant_isolation on messages
+  using (tenant_id = current_tenant_id()) with check (tenant_id = current_tenant_id());
+
+drop policy if exists tenant_isolation on attachments;
+create policy tenant_isolation on attachments
   using (tenant_id = current_tenant_id()) with check (tenant_id = current_tenant_id());
 
 -- Funciones SECURITY DEFINER para los únicos accesos que cruzan tenants ------
@@ -146,7 +167,7 @@ exception when duplicate_object then null; end $$;
 grant chat_reader to chat_app;
 grant usage on schema public to chat_app, chat_reader;
 grant select, update on tenants to chat_app;
-grant select, insert, update, delete on app_users, contacts, conversations, messages to chat_app;
+grant select, insert, update, delete on app_users, contacts, conversations, messages, attachments to chat_app;
 grant usage, select on all sequences in schema public to chat_app;
 grant select on tenants, contacts, conversations, messages to chat_reader;
 grant execute on function current_tenant_id() to chat_app, chat_reader;

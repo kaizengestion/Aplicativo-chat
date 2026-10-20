@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import AutoGrowTextarea from "@/components/AutoGrowTextarea";
 import MessageList from "@/components/MessageList";
 import { APP_NAME } from "@/lib/brand";
 import { ASSISTANT_FLYER, SOLUTIONS, SOLUTIONS_KICKER, type Flyer } from "@/lib/promos";
 import type { Message } from "@/lib/db";
+import Composer, { type Outgoing } from "./Composer";
 
 const POLL_MS = 3000;
 
@@ -15,7 +15,6 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
   const [token, setToken] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const lastId = useRef(0);
@@ -65,26 +64,33 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
     setToken(data.token);
   }
 
-  async function send(e?: React.FormEvent) {
-    e?.preventDefault();
-    const content = text.trim();
-    if (!content || !token || sending) return;
-    setText("");
+  /** Manda texto (JSON) o un archivo con texto opcional (multipart). Devuelve false si no se pudo. */
+  async function send({ content, file }: Outgoing) {
+    if (!token || sending) return false;
     setError("");
     setSending(true);
-    const optimistic: Message = { id: -Date.now(), sender: "contact", content, created_at: new Date().toISOString() };
+    const label = file ? (file.type.startsWith("audio/") ? "🎤 Enviando audio…" : `📎 Enviando ${file.name}…`) : "";
+    const optimistic: Message = { id: -Date.now(), sender: "contact", content: [label, content].filter(Boolean).join("\n"), created_at: new Date().toISOString() };
     setMessages((prev) => [...prev, optimistic]);
-    const res = await fetch(`/api/public/${slug}/messages`, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ token, content, after: lastId.current }),
-    });
+    let res: Response;
+    if (file) {
+      const form = new FormData();
+      form.append("token", token);
+      form.append("content", content);
+      form.append("after", String(lastId.current));
+      form.append("file", file);
+      res = await fetch(`/api/public/${slug}/messages`, { method: "POST", body: form }).catch(() => Response.error());
+    } else {
+      res = await fetch(`/api/public/${slug}/messages`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token, content, after: lastId.current }),
+      }).catch(() => Response.error());
+    }
     setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
     if (res.ok) merge((await res.json()).messages);
-    else {
-      setText(content);
-      setError((await res.json().catch(() => ({}))).error ?? "No se pudo enviar el mensaje");
-    }
+    else setError((await res.json().catch(() => ({}))).error ?? (res.status === 413 ? "El archivo es muy grande (máximo 4 MB)." : "No se pudo enviar el mensaje"));
     setSending(false);
+    return res.ok;
   }
 
   if (!ready) return null;
@@ -116,15 +122,10 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
           </div>
         ) : (
           <>
-            <MessageList messages={messages} perspective="contact" botName={botName} typing={sending} />
+            <MessageList messages={messages} perspective="contact" botName={botName} typing={sending}
+              fileUrl={(a) => `/api/public/${slug}/attachments/${a}?token=${encodeURIComponent(token)}`} />
             {error && <p className="error" style={{ padding: "0 1rem" }}>{error}</p>}
-            <form className="chat-input" onSubmit={send}>
-              <AutoGrowTextarea
-                value={text} onChange={(e) => setText(e.target.value)} placeholder="Escribe tu mensaje" rows={1}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              />
-              <button className="primary" disabled={sending || !text.trim()}>Enviar</button>
-            </form>
+            <Composer disabled={sending} onSend={send} onError={setError} />
           </>
         )}
       </div>

@@ -23,7 +23,10 @@ export function listConversations(tx: Tx, filter: string, q: string) {
     join contacts ct on ct.id = c.contact_id
     left join app_users u on u.id = c.assigned_user_id
     left join lateral (
-      select content, sender from messages m where m.conversation_id = c.id order by m.id desc limit 1
+      select coalesce(nullif(m.content, ''), (
+               select case a.kind when 'audio' then '🎤 Audio' when 'image' then '📷 Imagen' else '📄 PDF' end
+               from attachments a where a.message_id = m.id)) as content, m.sender
+      from messages m where m.conversation_id = c.id order by m.id desc limit 1
     ) lm on true
     where true
       ${filter === "needs_human" ? tx`and c.needs_human and c.status <> 'closed'` : tx``}
