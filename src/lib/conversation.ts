@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
+import { checkAttachmentLimit, recentFilesForBot, type AttachmentKind } from "./attachments";
 import { botReply } from "./bot";
 import { withTenant, type Message, type Tx } from "./db";
-import { checkMessageLimit } from "./limits";
+import { checkMessageLimit, RateLimitError } from "./limits";
 import { notifyHandoff } from "./notify";
 
 export function newToken() {
@@ -14,8 +15,11 @@ export function normalizePhone(phone: string) {
 
 export async function messagesAfter(tx: Tx, conversationId: string, after = 0) {
   return tx<Message[]>`
-    select m.id::int as id, m.sender, m.content, m.created_at, u.name as agent_name
+    select m.id::int as id, m.sender, m.content, m.created_at, u.name as agent_name,
+           case when a.id is null then null
+                else json_build_object('id', a.id, 'kind', a.kind, 'name', a.name, 'mime', a.mime) end as attachment
     from messages m left join app_users u on u.id = m.agent_id
+    left join attachments a on a.message_id = m.id
     where m.conversation_id = ${conversationId} and m.id > ${after}
     order by m.id`;
 }
@@ -24,11 +28,20 @@ export async function messagesAfter(tx: Tx, conversationId: string, after = 0) {
  * Guarda el mensaje del cliente y, si la conversación está en modo bot, genera la respuesta.
  * La llamada a Claude ocurre fuera de la transacción; si un agente tomó el control mientras tanto, la respuesta se descarta.
  */
-export async function handleContactMessage(tenantId: string, conversationId: string, content: string) {
+export type IncomingFile = { kind: AttachmentKind; mime: string; name: string; data: Buffer };
+
+export async function handleContactMessage(tenantId: string, conversationId: string, content: string, file?: IncomingFile) {
   const ctx = await withTenant(tenantId, async (tx) => {
     await checkMessageLimit(tx, conversationId);
-    await tx`insert into messages (tenant_id, conversation_id, sender, content)
-             values (${tenantId}, ${conversationId}, 'contact', ${content})`;
+    if (file && !(await checkAttachmentLimit(tx, conversationId))) {
+      throw new RateLimitError("Llegaste al límite de archivos por hoy. Puedes seguir escribiendo.");
+    }
+    const [msg] = await tx<{ id: string }[]>`insert into messages (tenant_id, conversation_id, sender, content)
+             values (${tenantId}, ${conversationId}, 'contact', ${content}) returning id`;
+    if (file) {
+      await tx`insert into attachments (tenant_id, conversation_id, message_id, kind, mime, name, size, data)
+               values (${tenantId}, ${conversationId}, ${msg.id}, ${file.kind}, ${file.mime}, ${file.name}, ${file.data.length}, ${file.data})`;
+    }
     const [conv] = await tx<{ status: string; contact_id: string }[]>`
       update conversations set last_message_at = now(),
         status = case when status = 'closed' then 'bot' else status end
@@ -37,14 +50,15 @@ export async function handleContactMessage(tenantId: string, conversationId: str
     const [tenant] = await tx<{ name: string; bot_name: string; knowledge_base: string }[]>`
       select name, bot_name, knowledge_base from tenants where id = ${tenantId}`;
     const history = conv.status === "bot" ? await messagesAfter(tx, conversationId) : [];
-    return { status: conv.status, tenant, history };
+    const files = conv.status === "bot" ? await recentFilesForBot(tx, conversationId) : new Map();
+    return { status: conv.status, tenant, history, files };
   });
 
   if (ctx.status !== "bot") return;
 
   let result;
   try {
-    result = await botReply(ctx.tenant, ctx.history);
+    result = await botReply(ctx.tenant, ctx.history, ctx.files);
   } catch (e) {
     console.error("Error del bot", e);
     result = { reply: "Tuve un problema para responder. Una persona del equipo revisará tu mensaje.", handoff: { reason: "Error al generar respuesta" } };

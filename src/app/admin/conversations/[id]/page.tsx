@@ -68,7 +68,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           <strong>{conv.contact_name}</strong>
           <StatusBadge status={conv.status} needsHuman={conv.needs_human} />
         </header>
-        <MessageList messages={messages} perspective="agent" botName="Bot" />
+        <MessageList messages={messages} perspective="agent" botName="Bot" fileUrl={(a) => `/api/admin/attachments/${a}`} />
         <form className="chat-input" onSubmit={send}>
           <AutoGrowTextarea
             value={text} onChange={(e) => setText(e.target.value)} rows={1}
