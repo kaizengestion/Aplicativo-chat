@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { use, useCallback, useEffect, useRef, useState } from "react";
+import AutoGrowTextarea from "@/components/AutoGrowTextarea";
 import MessageList from "@/components/MessageList";
 import StatusBadge from "@/components/StatusBadge";
 import type { Message } from "@/lib/db";
@@ -69,7 +70,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         </header>
         <MessageList messages={messages} perspective="agent" botName="Bot" />
         <form className="chat-input" onSubmit={send}>
-          <textarea
+          <AutoGrowTextarea
             value={text} onChange={(e) => setText(e.target.value)} rows={1}
             placeholder={conv.status === "human" ? "Escribe al cliente" : "Escribir aquí toma la conversación y pausa al bot"}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
