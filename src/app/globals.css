@@ -71,8 +71,8 @@ button:disabled { opacity: .6; cursor: default; }
 .chat-header.row { flex-wrap: nowrap; }
 .chat-logo { width: 2.75rem; height: 2.75rem; border-radius: 0.625rem; flex: none; }
 .chat-body { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.chat-input { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; border-top: 1px solid var(--border); background: var(--panel); }
-.chat-input textarea { min-height: 2.75rem; max-height: 8.75rem; }
+.chat-input { display: flex; align-items: flex-end; gap: 0.5rem; padding: 0.75rem 1rem; border-top: 1px solid var(--border); background: var(--panel); }
+.chat-input textarea { resize: none; overflow-y: auto; min-height: 2.75rem; max-height: 8.75rem; }
 .bubble { max-width: 80%; padding: 0.5625rem 0.8125rem; border-radius: 1rem; white-space: pre-wrap; word-wrap: break-word; border: 1px solid var(--border); }
 .bubble.me { align-self: flex-end; background: var(--bubble-me); color: var(--bubble-me-text); border-color: transparent; border-bottom-right-radius: 0.25rem; }
 .bubble.them { align-self: flex-start; background: var(--bubble-them); border-bottom-left-radius: 0.25rem; }
