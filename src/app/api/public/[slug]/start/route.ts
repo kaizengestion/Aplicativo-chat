@@ -1,5 +1,5 @@
 import { publicTenant, withTenant } from "@/lib/db";
-import { messagesAfter, newToken, normalizePhone } from "@/lib/conversation";
+import { normalizePhone, openConversation } from "@/lib/conversation";
 import { checkStartLimit, rateLimited } from "@/lib/limits";
 
 type Ctx = { params: Promise<{ slug: string }> };
@@ -18,7 +18,6 @@ export async function POST(req: Request, { params }: Ctx) {
     return Response.json({ error: "Escribe tu nombre y tu número de WhatsApp" }, { status: 400 });
   }
 
-  const token = newToken();
   const data = await withTenant(tenant.id, async (tx) => {
     await checkStartLimit(tx, phone);
     const [contact] = await tx<{ id: string }[]>`
@@ -26,14 +25,9 @@ export async function POST(req: Request, { params }: Ctx) {
       on conflict (tenant_id, phone) do update
         set name = excluded.name, email = coalesce(excluded.email, contacts.email), last_seen_at = now()
       returning id`;
-    const [conv] = await tx<{ id: string }[]>`
-      insert into conversations (tenant_id, contact_id, public_token)
-      values (${tenant.id}, ${contact.id}, ${token}) returning id`;
-    await tx`insert into messages (tenant_id, conversation_id, sender, content)
-             values (${tenant.id}, ${conv.id}, 'bot', ${tenant.welcome_message})`;
-    return { messages: await messagesAfter(tx, conv.id), status: "bot" };
+    return openConversation(tx, tenant.id, contact.id, tenant.welcome_message);
   }).catch(rateLimited);
   if (data instanceof Response) return data;
 
-  return Response.json({ token, ...data });
+  return Response.json(data);
 }
