@@ -90,9 +90,9 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           <p className="badge warn" style={{ whiteSpace: "normal" }}>Motivo: {conv.handoff_reason}</p>
         )}
         <h3 style={{ marginTop: "1.125rem" }}>Control</h3>
-        {conv.assigned_name && conv.status === "human" && <p className="muted">Atiende {conv.assigned_name}</p>}
+        {conv.status === "human" && <p className="muted">{conv.assigned_name ? `Atiende ${conv.assigned_name}` : "El bot está en pausa: esperando que alguien tome la conversación."}</p>}
         <div className="row">
-          {conv.status !== "human" && <button className="primary" disabled={busy} onClick={() => setStatus("human")}>Tomar conversación</button>}
+          {(conv.status !== "human" || !conv.assigned_name) && <button className="primary" disabled={busy} onClick={() => setStatus("human")}>Tomar conversación</button>}
           {conv.status !== "bot" && <button disabled={busy} onClick={() => setStatus("bot")}>Devolver al bot</button>}
           {conv.status !== "closed" && <button disabled={busy} onClick={() => setStatus("closed")}>Cerrar</button>}
         </div>

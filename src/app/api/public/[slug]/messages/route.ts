@@ -1,21 +1,9 @@
-import { publicTenant, withTenant } from "@/lib/db";
+import { withTenant } from "@/lib/db";
 import { kindOf, MAX_FILE_BYTES, transcribe } from "@/lib/attachments";
-import { handleContactMessage, messagesAfter, type IncomingFile } from "@/lib/conversation";
+import { findPublicConversation as resolve, handleContactMessage, messagesAfter, type IncomingFile } from "@/lib/conversation";
 import { rateLimited } from "@/lib/limits";
 
 type Ctx = { params: Promise<{ slug: string }> };
-
-async function resolve(slug: string, token: string | null) {
-  if (!token) return null;
-  const tenant = await publicTenant(slug);
-  if (!tenant) return null;
-  const conv = await withTenant(tenant.id, async (tx) => {
-    const [c] = await tx<{ id: string; status: string }[]>`
-      select id, status from conversations where public_token = ${token}`;
-    return c;
-  });
-  return conv ? { tenant, conv } : null;
-}
 
 /** Sondeo de mensajes nuevos (el cliente lo llama cada pocos segundos). */
 export async function GET(req: Request, { params }: Ctx) {

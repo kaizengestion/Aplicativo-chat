@@ -17,6 +17,8 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  // La conversación está con (o esperando a) una persona del equipo: el bot no responde.
+  const [withHuman, setWithHuman] = useState(false);
   const lastId = useRef(0);
 
   const merge = useCallback((incoming: Message[] | undefined) => {
@@ -45,7 +47,11 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
         setToken(null);
         return;
       }
-      if (res.ok && !stop) merge((await res.json()).messages);
+      if (res.ok && !stop) {
+        const data = await res.json();
+        merge(data.messages);
+        setWithHuman(data.status === "human");
+      }
     }
     poll();
     const t = setInterval(poll, POLL_MS);
@@ -59,9 +65,40 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
     const res = await fetch(`/api/public/${slug}/start`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!res.ok) return setError(data.error ?? "No se pudo iniciar el chat");
+    switchTo(data);
+  }
+
+  /** Empieza de cero con la conversación que devuelve el servidor (nuevo token, solo la bienvenida). */
+  function switchTo(data: { token: string; messages: Message[] }) {
     try { localStorage.setItem(storageKey, data.token); } catch {}
+    lastId.current = 0;
+    setMessages([]);
+    setWithHuman(false);
     merge(data.messages);
     setToken(data.token);
+  }
+
+  async function askForHuman() {
+    if (!token) return;
+    setError("");
+    const res = await fetch(`/api/public/${slug}/handoff`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, after: lastId.current }),
+    }).catch(() => Response.error());
+    if (!res.ok) return setError("No pudimos avisar al equipo. Intenta de nuevo.");
+    merge((await res.json()).messages);
+    setWithHuman(true);
+  }
+
+  async function restart() {
+    if (!token || !confirm("¿Empezar una conversación nueva desde cero?")) return;
+    setError("");
+    const res = await fetch(`/api/public/${slug}/restart`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token }),
+    }).catch(() => Response.error());
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return setError(data.error ?? "No se pudo reiniciar el chat");
+    switchTo(data);
   }
 
   /** Manda texto (JSON) o un archivo con texto opcional (multipart). Devuelve false si no se pudo. */
@@ -104,8 +141,9 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
           <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
           <div>
             <strong>{APP_NAME}</strong>
-            <div className="muted" style={{ fontSize: "0.8125rem" }}>{businessName} · Atiende {botName}</div>
+            <div className="muted" style={{ fontSize: "0.8125rem" }}>{businessName} · Atiende {withHuman ? "una persona del equipo" : botName}</div>
           </div>
+          {token && <ChatMenu withHuman={withHuman} onHuman={askForHuman} onRestart={restart} />}
         </header>
   
         {!token ? (
@@ -132,6 +170,54 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
       </div>
       <aside className="promo-side" aria-label={SOLUTIONS_KICKER}><SolutionsFlyer /></aside>
     </div>
+  );
+}
+
+/** Botón de tres puntos (esquina superior derecha) con las opciones de la conversación. */
+function ChatMenu({ withHuman, onHuman, onRestart }: { withHuman: boolean; onHuman: () => void; onRestart: () => void }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // Se cierra al tocar afuera o con Escape.
+  useEffect(() => {
+    if (!open) return;
+    const outside = (e: PointerEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", esc); };
+  }, [open]);
+
+  function choose(action: () => void) {
+    setOpen(false);
+    action();
+  }
+
+  return (
+    <div className="chat-menu" ref={box}>
+      <button type="button" className="icon-btn" aria-label="Más opciones" title="Más opciones" aria-haspopup="menu" aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}>
+        <DotsIcon />
+      </button>
+      {open && (
+        <div className="chat-menu-list" role="menu">
+          <button type="button" role="menuitem" disabled={withHuman} onClick={() => choose(onHuman)}>
+            <span aria-hidden="true">🙋</span>{withHuman ? "Ya avisamos a una persona" : "Hablar con un humano"}
+          </button>
+          <button type="button" role="menuitem" onClick={() => choose(onRestart)}>
+            <span aria-hidden="true">↻</span>Reiniciar chat
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DotsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+    </svg>
   );
 }
 
