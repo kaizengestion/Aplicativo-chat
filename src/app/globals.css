@@ -94,7 +94,14 @@ button:disabled { opacity: .6; cursor: default; }
 @keyframes rec-pulse { to { opacity: .3; } }
 .att-image { display: block; margin-bottom: 0.25rem; }
 .att-image img { display: block; max-width: 100%; max-height: 16rem; border-radius: 0.625rem; }
-.att-audio { display: block; width: 15rem; max-width: 100%; height: 2.5rem; }
+.wave-audio { display: flex; align-items: center; gap: 0.625rem; width: 15rem; max-width: 100%; padding: 0.125rem 0; }
+.wave-audio audio { display: none; }
+.wave-play { flex: none; width: 2.25rem; height: 2.25rem; padding: 0; justify-content: center; border-radius: 50%; border: 0; background: var(--primary); color: var(--on-primary); }
+.wave-shape { flex: 1; min-width: 0; height: 2rem; cursor: pointer; fill: currentColor; }
+.wave-shape .wave-rest { opacity: .35; }
+.wave-time { flex: none; font-size: 0.75rem; font-variant-numeric: tabular-nums; opacity: .75; }
+.chat { position: relative; }
+.drop-overlay { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; margin: 0.75rem; border: 2px dashed var(--accent); border-radius: 0.875rem; background: color-mix(in srgb, var(--bg) 85%, transparent); color: var(--text); font-weight: 600; pointer-events: none; }
 .att-file { display: inline-flex; gap: 0.375rem; align-items: center; color: inherit; font-weight: 600; word-break: break-all; }
 .bubble .transcript { display: block; margin-top: 0.25rem; font-size: 0.8125rem; font-style: italic; opacity: .8; }
 .bubble { max-width: 80%; padding: 0.5625rem 0.8125rem; border-radius: 1rem; white-space: pre-wrap; word-wrap: break-word; border: 1px solid var(--border); }

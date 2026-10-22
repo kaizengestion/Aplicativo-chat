@@ -24,8 +24,10 @@ function newRecognition(): Recognition | null {
 }
 
 /** Zona de escritura del chat público: texto, clip para adjuntar fotos o PDF, y micrófono para mandar audios. */
-export default function Composer({ disabled, onSend, onError }: {
+export default function Composer({ disabled, onSend, onError, dropped }: {
   disabled: boolean; onSend: (m: Outgoing) => Promise<boolean>; onError: (msg: string) => void;
+  /** Archivo que el cliente arrastró y soltó sobre el chat (queda listo para enviar, como con el clip). */
+  dropped?: { file: File } | null;
 }) {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -37,8 +39,6 @@ export default function Composer({ disabled, onSend, onError }: {
   const recorder = useRef<MediaRecorder | null>(null);
   const discard = useRef(false);
   const speech = useRef<{ r: Recognition; text: string; interim: string; live: boolean; ended: Promise<void> } | null>(null);
-  // Lo que el navegador va entendiendo mientras se graba (se muestra para que el cliente vea que funciona).
-  const [heard, setHeard] = useState("");
   const [speechNote, setSpeechNote] = useState("");
 
   useEffect(() => {
@@ -61,10 +61,16 @@ export default function Composer({ disabled, onSend, onError }: {
   // Si se cierra la página grabando, soltar el micrófono.
   useEffect(() => () => { discard.current = true; recorder.current?.stop(); }, []);
 
-  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
+  useEffect(() => { if (dropped) accept(dropped.file); }, [dropped]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     e.target.value = "";
-    if (!f) return;
+    if (f) accept(f);
+  }
+
+  async function accept(f: File) {
+    if (!ACCEPT.split(",").includes(f.type)) return onError("Solo se pueden mandar fotos o PDF.");
     onError("");
     setPreparing(true);
     const ready = f.type.startsWith("image/") && f.type !== "image/gif" ? await shrinkImage(f) : f;
@@ -122,7 +128,6 @@ export default function Composer({ disabled, onSend, onError }: {
   }
 
   function startSpeech() {
-    setHeard("");
     setSpeechNote("");
     const r = newRecognition();
     if (!r) return setSpeechNote("Este navegador no pasa la voz a texto; el audio se envía igual.");
@@ -139,7 +144,6 @@ export default function Composer({ disabled, onSend, onError }: {
         else interim += `${t} `;
       }
       s.interim = interim.trim();
-      setHeard(`${s.text}${s.interim}`.trim());
     };
     // Algunos celulares cortan el reconocimiento en cada pausa: se reanuda mientras se siga grabando.
     r.onend = () => { if (s.live) { try { r.start(); return; } catch {} } done(); };
@@ -175,7 +179,7 @@ export default function Composer({ disabled, onSend, onError }: {
         <span className="rec-dot" aria-hidden="true" />
         <span className="rec-time" aria-live="polite">
           Grabando {clock(seconds)}
-          {(heard || speechNote) && <span className="rec-heard">{heard ? (heard.length > 60 ? `…${heard.slice(-60)}` : heard) : speechNote}</span>}
+          {speechNote && <span className="rec-heard">{speechNote}</span>}
         </span>
         <button type="button" className="icon-btn" onClick={() => stopRecording(false)} aria-label="Cancelar audio" title="Cancelar">
           <TrashIcon />

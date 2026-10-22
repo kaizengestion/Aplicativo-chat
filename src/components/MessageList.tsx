@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import type { Message } from "@/lib/db";
+import WaveAudio from "./WaveAudio";
 
 /** perspective "contact": el cliente ve sus mensajes a la derecha. "agent": el equipo ve los suyos y los del bot a la derecha. */
 export default function MessageList({ messages, perspective, botName, typing, fileUrl }: {
@@ -26,8 +27,9 @@ export default function MessageList({ messages, perspective, botName, typing, fi
           <div key={m.id} className={`bubble ${mine ? "me" : "them"} ${m.sender === "agent" && !mine ? "agent" : ""}`}>
             {who && !(perspective === "contact" && mine) && <span className="who">{who}</span>}
             {m.attachment && <Attachment a={m.attachment} url={fileUrl(m.attachment.id)} />}
+            {/* El texto de un audio lo usa el bot; solo el equipo lo ve, el cliente ve el audio solo. */}
             {m.attachment?.kind === "audio"
-              ? <span className="transcript">{m.content || "Audio sin transcripción"}</span>
+              ? perspective === "agent" && <span className="transcript">{m.content || "Audio sin transcripción"}</span>
               : m.content}
           </div>
         );
@@ -42,7 +44,7 @@ function Attachment({ a, url }: { a: NonNullable<Message["attachment"]>; url: st
   if (a.kind === "image") {
     return <a href={url} target="_blank" rel="noreferrer" className="att-image"><img src={url} alt={a.name} loading="lazy" /></a>;
   }
-  if (a.kind === "audio") return <audio className="att-audio" controls preload="metadata" src={url} />;
+  if (a.kind === "audio") return <WaveAudio src={url} />;
   return (
     <a href={url} target="_blank" rel="noreferrer" className="att-file">
       <span aria-hidden="true">📄</span> {a.name}
