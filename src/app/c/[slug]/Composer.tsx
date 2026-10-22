@@ -14,7 +14,7 @@ export type Outgoing = { content: string; file?: File; transcript?: string };
 type Recognition = {
   lang: string; continuous: boolean; interimResults: boolean;
   onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
-  onend: (() => void) | null; onerror: (() => void) | null;
+  onend: (() => void) | null; onerror: ((e: { error: string }) => void) | null;
   start(): void; stop(): void;
 };
 function newRecognition(): Recognition | null {
@@ -36,7 +36,10 @@ export default function Composer({ disabled, onSend, onError }: {
   const picker = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const discard = useRef(false);
-  const speech = useRef<{ r: Recognition; text: string; live: boolean; ended: Promise<void> } | null>(null);
+  const speech = useRef<{ r: Recognition; text: string; interim: string; live: boolean; ended: Promise<void> } | null>(null);
+  // Lo que el navegador va entendiendo mientras se graba (se muestra para que el cliente vea que funciona).
+  const [heard, setHeard] = useState("");
+  const [speechNote, setSpeechNote] = useState("");
 
   useEffect(() => {
     if (!file || !file.type.startsWith("image/")) return setPreview(null);
@@ -119,21 +122,33 @@ export default function Composer({ disabled, onSend, onError }: {
   }
 
   function startSpeech() {
+    setHeard("");
+    setSpeechNote("");
     const r = newRecognition();
-    if (!r) return;
+    if (!r) return setSpeechNote("Este navegador no pasa la voz a texto; el audio se envía igual.");
     let done!: () => void;
-    const s = { r, text: "", live: true, ended: new Promise<void>((res) => { done = res; }) };
-    r.lang = navigator.language || "es";
+    const s = { r, text: "", interim: "", live: true, ended: new Promise<void>((res) => { done = res; }) };
+    r.lang = speechLang();
     r.continuous = true;
-    r.interimResults = false;
+    r.interimResults = true;
     r.onresult = (e) => {
+      let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) s.text += `${e.results[i][0].transcript.trim()} `;
+        const t = e.results[i][0].transcript.trim();
+        if (e.results[i].isFinal) s.text += `${t} `;
+        else interim += `${t} `;
       }
+      s.interim = interim.trim();
+      setHeard(`${s.text}${s.interim}`.trim());
     };
     // Algunos celulares cortan el reconocimiento en cada pausa: se reanuda mientras se siga grabando.
     r.onend = () => { if (s.live) { try { r.start(); return; } catch {} } done(); };
-    r.onerror = () => { s.live = false; };
+    // Brave y otros navegadores tienen el reconocimiento pero sin servicio ("network"): se avisa y el audio va igual.
+    r.onerror = (e) => {
+      if (e.error === "no-speech" || e.error === "aborted") return;
+      s.live = false;
+      setSpeechNote("Este navegador no pasa la voz a texto; el audio se envía igual.");
+    };
     speech.current = s;
     try { r.start(); } catch { speech.current = null; }
   }
@@ -146,7 +161,7 @@ export default function Composer({ disabled, onSend, onError }: {
     s.live = false;
     try { s.r.stop(); } catch {}
     await Promise.race([s.ended, new Promise((r) => setTimeout(r, 2000))]);
-    return s.text.trim();
+    return `${s.text}${s.interim}`.trim();
   }
 
   function stopRecording(send: boolean) {
@@ -158,7 +173,10 @@ export default function Composer({ disabled, onSend, onError }: {
     return (
       <div className="chat-input recording">
         <span className="rec-dot" aria-hidden="true" />
-        <span className="rec-time" aria-live="polite">Grabando {clock(seconds)}</span>
+        <span className="rec-time" aria-live="polite">
+          Grabando {clock(seconds)}
+          {(heard || speechNote) && <span className="rec-heard">{heard ? (heard.length > 60 ? `…${heard.slice(-60)}` : heard) : speechNote}</span>}
+        </span>
         <button type="button" className="icon-btn" onClick={() => stopRecording(false)} aria-label="Cancelar audio" title="Cancelar">
           <TrashIcon />
         </button>
@@ -195,6 +213,12 @@ export default function Composer({ disabled, onSend, onError }: {
       </form>
     </div>
   );
+}
+
+/** Idioma para el reconocimiento: el del navegador, con una variante concreta para el español genérico. */
+function speechLang() {
+  const l = navigator.language || "es";
+  return /^es(-419)?$/i.test(l) ? "es-MX" : l;
 }
 
 function clock(s: number) {

@@ -84,7 +84,8 @@ button:disabled { opacity: .6; cursor: default; }
 .att-chip-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; }
 .chat-input.recording { align-items: center; }
 .rec-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--primary); animation: rec-pulse 1s infinite alternate; }
-.rec-time { flex: 1; font-variant-numeric: tabular-nums; }
+.rec-time { flex: 1; min-width: 0; font-variant-numeric: tabular-nums; }
+.rec-heard { display: block; font-size: 0.8125rem; color: var(--muted); font-style: italic; }
 @keyframes rec-pulse { to { opacity: .3; } }
 .att-image { display: block; margin-bottom: 0.25rem; }
 .att-image img { display: block; max-width: 100%; max-height: 16rem; border-radius: 0.625rem; }
