@@ -131,12 +131,32 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
     return res.ok;
   }
 
+  // Arrastrar una foto o PDF sobre el chat la deja lista para enviar (el contador evita parpadeos al pasar sobre hijos).
+  const [dragging, setDragging] = useState(false);
+  const [dropped, setDropped] = useState<{ file: File } | null>(null);
+  const dragDepth = useRef(0);
+  const hasFiles = (e: React.DragEvent) => e.dataTransfer.types.includes("Files");
+  const dropHandlers = {
+    onDragEnter: (e: React.DragEvent) => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth.current++; setDragging(true); },
+    onDragOver: (e: React.DragEvent) => { if (hasFiles(e)) e.preventDefault(); },
+    onDragLeave: () => { if (--dragDepth.current <= 0) { dragDepth.current = 0; setDragging(false); } },
+    onDrop: (e: React.DragEvent) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      dragDepth.current = 0;
+      setDragging(false);
+      const f = e.dataTransfer.files[0];
+      if (f) setDropped({ file: f });
+    },
+  };
+
   if (!ready) return null;
 
   return (
     <div className="chat-page">
       <aside className="promo-side" aria-label="Kaizen"><FlyerCard flyer={ASSISTANT_FLYER} /></aside>
-      <div className="chat">
+      <div className="chat" {...(token ? dropHandlers : {})}>
+        {dragging && <div className="drop-overlay" aria-hidden="true">Suelta la imagen para enviarla</div>}
         <header className="chat-header row">
           <img src="/kaizen-logo.png" alt="Kaizen" width={44} height={44} className="chat-logo" />
           <div>
@@ -164,7 +184,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
             <MessageList messages={messages} perspective="contact" botName={botName} typing={sending}
               fileUrl={(a) => `/api/public/${slug}/attachments/${a}?token=${encodeURIComponent(token)}`} />
             {error && <p className="error" style={{ padding: "0 1rem" }}>{error}</p>}
-            <Composer disabled={sending} onSend={send} onError={setError} />
+            <Composer disabled={sending} onSend={send} onError={setError} dropped={dropped} />
           </>
         )}
       </div>
