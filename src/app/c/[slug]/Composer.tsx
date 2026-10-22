@@ -8,7 +8,20 @@ const ACCEPT = "image/jpeg,image/png,image/gif,image/webp,application/pdf";
 // Chrome/Firefox graban webm; Safari (iPhone) graba mp4.
 const RECORD_TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
 
-export type Outgoing = { content: string; file?: File };
+export type Outgoing = { content: string; file?: File; transcript?: string };
+
+// Reconocimiento de voz del navegador (Chrome, Safari): pasa el audio a texto gratis mientras se graba.
+type Recognition = {
+  lang: string; continuous: boolean; interimResults: boolean;
+  onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+  onend: (() => void) | null; onerror: (() => void) | null;
+  start(): void; stop(): void;
+};
+function newRecognition(): Recognition | null {
+  const w = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+  const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+  return Ctor ? new Ctor() : null;
+}
 
 /** Zona de escritura del chat público: texto, clip para adjuntar fotos o PDF, y micrófono para mandar audios. */
 export default function Composer({ disabled, onSend, onError }: {
@@ -23,6 +36,7 @@ export default function Composer({ disabled, onSend, onError }: {
   const picker = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const discard = useRef(false);
+  const speech = useRef<{ r: Recognition; text: string; live: boolean; ended: Promise<void> } | null>(null);
 
   useEffect(() => {
     if (!file || !file.type.startsWith("image/")) return setPreview(null);
@@ -84,8 +98,9 @@ export default function Composer({ disabled, onSend, onError }: {
     const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     const chunks: Blob[] = [];
     rec.ondataavailable = (ev) => { if (ev.data.size) chunks.push(ev.data); };
-    rec.onstop = () => {
+    rec.onstop = async () => {
       stream.getTracks().forEach((t) => t.stop());
+      const transcript = await finishSpeech();
       setRecording(false);
       recorder.current = null;
       if (discard.current || !chunks.length) return;
@@ -93,13 +108,45 @@ export default function Composer({ disabled, onSend, onError }: {
       const ext = type === "audio/mp4" ? "m4a" : type === "audio/ogg" ? "ogg" : "webm";
       const audio = new File(chunks, `audio-${Date.now()}.${ext}`, { type });
       if (audio.size > MAX_BYTES) return onError("El audio es muy largo. Prueba con uno más corto.");
-      onSend({ content: "", file: audio });
+      onSend({ content: "", file: audio, transcript });
     };
     discard.current = false;
     recorder.current = rec;
     setSeconds(0);
     setRecording(true);
     rec.start(1000);
+    startSpeech();
+  }
+
+  function startSpeech() {
+    const r = newRecognition();
+    if (!r) return;
+    let done!: () => void;
+    const s = { r, text: "", live: true, ended: new Promise<void>((res) => { done = res; }) };
+    r.lang = navigator.language || "es";
+    r.continuous = true;
+    r.interimResults = false;
+    r.onresult = (e) => {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) s.text += `${e.results[i][0].transcript.trim()} `;
+      }
+    };
+    // Algunos celulares cortan el reconocimiento en cada pausa: se reanuda mientras se siga grabando.
+    r.onend = () => { if (s.live) { try { r.start(); return; } catch {} } done(); };
+    r.onerror = () => { s.live = false; };
+    speech.current = s;
+    try { r.start(); } catch { speech.current = null; }
+  }
+
+  /** Detiene el reconocimiento y espera (hasta 2 s) los últimos resultados. */
+  async function finishSpeech() {
+    const s = speech.current;
+    speech.current = null;
+    if (!s) return "";
+    s.live = false;
+    try { s.r.stop(); } catch {}
+    await Promise.race([s.ended, new Promise((r) => setTimeout(r, 2000))]);
+    return s.text.trim();
   }
 
   function stopRecording(send: boolean) {

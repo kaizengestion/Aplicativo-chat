@@ -65,7 +65,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
   }
 
   /** Manda texto (JSON) o un archivo con texto opcional (multipart). Devuelve false si no se pudo. */
-  async function send({ content, file }: Outgoing) {
+  async function send({ content, file, transcript }: Outgoing) {
     if (!token || sending) return false;
     setError("");
     setSending(true);
@@ -79,6 +79,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
       form.append("content", content);
       form.append("after", String(lastId.current));
       form.append("file", file);
+      if (transcript) form.append("transcript", transcript);
       res = await fetch(`/api/public/${slug}/messages`, { method: "POST", body: form }).catch(() => Response.error());
     } else {
       res = await fetch(`/api/public/${slug}/messages`, {

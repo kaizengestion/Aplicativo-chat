@@ -51,7 +51,8 @@ export async function POST(req: Request, { params }: Ctx) {
     const name = (body.file.name || (kind === "audio" ? "audio" : "archivo")).slice(0, 200);
     file = { kind, mime: body.file.type, name, data };
     // El texto de un audio es su transcripción: así lo lee el bot, el tablero y las consultas.
-    if (kind === "audio") content = (await transcribe(data, body.file.type, name))?.slice(0, 4000) ?? "";
+    // Si no hay servicio de transcripción, se usa el texto que reconoció el navegador al grabar.
+    if (kind === "audio") content = ((await transcribe(data, body.file.type, name)) ?? String(body.transcript ?? "").trim()).slice(0, 4000);
   }
   if (!content && !file) return Response.json({ error: "Mensaje vacío" }, { status: 400 });
 
