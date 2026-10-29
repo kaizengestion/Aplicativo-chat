@@ -11,6 +11,6 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!found) return Response.json({ error: "Conversación no encontrada" }, { status: 404 });
   await requestHuman(found.tenant.id, found.conv.id);
   const after = Number(body.after ?? 0) || 0;
-  const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after));
+  const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after, found.conv.since));
   return Response.json({ messages, status: "human" });
 }

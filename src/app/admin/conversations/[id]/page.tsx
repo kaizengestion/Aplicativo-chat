@@ -8,7 +8,7 @@ import type { Message } from "@/lib/db";
 
 type Conv = {
   id: string; status: "bot" | "human" | "closed"; needs_human: boolean; handoff_reason: string | null;
-  contact_name: string; contact_phone: string; contact_email: string | null; assigned_name: string | null; created_at: string;
+  contact_name: string; contact_phone: string; contact_email: string | null; assigned_name: string | null; created_at: string; visits: number;
 };
 
 export default function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -85,7 +85,9 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           <a href={`https://wa.me/${conv.contact_phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">{conv.contact_phone}</a>
         </p>
         {conv.contact_email && <p style={{ margin: "0.25rem 0" }}>{conv.contact_email}</p>}
-        <p className="muted" style={{ fontSize: "0.8125rem" }}>Inició {new Date(conv.created_at).toLocaleString()}</p>
+        <p className="muted" style={{ fontSize: "0.8125rem" }}>
+          Primera vez {new Date(conv.created_at).toLocaleString()}{conv.visits > 1 && ` · abrió el chat ${conv.visits} veces`}
+        </p>
         {conv.needs_human && conv.handoff_reason && (
           <p className="badge warn" style={{ whiteSpace: "normal" }}>Motivo: {conv.handoff_reason}</p>
         )}

@@ -3,7 +3,7 @@ import { rateLimited } from "@/lib/limits";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
-/** Menú del chat → "Reiniciar chat": conversación nueva para el mismo contacto, sin volver a pedir sus datos. */
+/** Menú del chat → "Reiniciar chat": el cliente ve el chat de cero, sin volver a pedir sus datos. */
 export async function POST(req: Request, { params }: Ctx) {
   const { slug } = await params;
   const body = await req.json().catch(() => ({}));
