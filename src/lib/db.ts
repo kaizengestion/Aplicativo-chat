@@ -40,4 +40,6 @@ export type Message = {
   created_at: string;
   agent_name?: string | null;
   attachment?: { id: string; kind: "image" | "pdf" | "audio"; name: string; mime: string } | null;
+  /** Primer mensaje de una visita del cliente (el tablero muestra un separador). */
+  new_session?: boolean;
 };

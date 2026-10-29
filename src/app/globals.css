@@ -110,6 +110,9 @@ button:disabled { opacity: .6; cursor: default; }
 .bubble.agent { background: var(--agent-soft); }
 .bubble .who { display: block; font-size: 0.75rem; font-weight: 600; opacity: .75; margin-bottom: 2px; }
 .sys { align-self: center; font-size: 0.75rem; color: var(--muted); }
+/* Tablero: separa cada vez que el cliente volvió a abrir el chat */
+.session-sep { align-self: stretch; display: flex; align-items: center; gap: 0.625rem; font-size: 0.75rem; color: var(--muted); margin: 0.5rem 0; }
+.session-sep::before, .session-sep::after { content: ""; flex: 1; border-top: 1px solid var(--border); }
 .typing { align-self: flex-start; color: var(--muted); font-size: 0.8125rem; }
 
 /* Costados del chat público en PC: flyers de Kaizen (contenido en src/lib/promos.ts) */

@@ -20,10 +20,10 @@ export async function checkMessageLimit(tx: Tx, conversationId: string) {
 
 export async function checkStartLimit(tx: Tx, phone: string) {
   const [r] = await tx<{ phone: number; tenant: number }[]>`
-    select count(*) filter (where ct.phone = ${phone} and c.created_at > now() - interval '1 hour')::int as phone,
-           count(*) filter (where c.created_at > now() - interval '1 minute')::int as tenant
-    from conversations c join contacts ct on ct.id = c.contact_id
-    where c.created_at > now() - interval '1 hour'`;
+    select count(*) filter (where ct.phone = ${phone})::int as phone,
+           count(*) filter (where s.created_at > now() - interval '1 minute')::int as tenant
+    from chat_sessions s join conversations c on c.id = s.conversation_id join contacts ct on ct.id = c.contact_id
+    where s.created_at > now() - interval '1 hour'`;
   if (r.phone >= STARTS_PER_PHONE_PER_HOUR) throw new RateLimitError("Ya abriste varios chats en la última hora. Intenta más tarde.");
   if (r.tenant >= STARTS_PER_TENANT_PER_MINUTE) throw new RateLimitError("Hay mucha demanda en este momento. Intenta en un minuto.");
 }
