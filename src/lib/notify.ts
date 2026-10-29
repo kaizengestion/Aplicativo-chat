@@ -1,8 +1,10 @@
+import nodemailer, { type Transporter } from "nodemailer";
 import { withTenant } from "./db";
 
 /**
  * Avisa por correo a los usuarios del negocio que una conversación necesita una persona.
- * Usa Resend (https://resend.com) si RESEND_API_KEY y NOTIFY_FROM están configuradas; si no, solo lo registra en el log.
+ * Usa SMTP (p. ej. Google Workspace) si SMTP_HOST está configurado, si no Resend (https://resend.com) con RESEND_API_KEY;
+ * sin ninguno de los dos, o sin NOTIFY_FROM, solo lo registra en el log.
  */
 export async function notifyHandoff(tenantId: string, conversationId: string, reason: string) {
   const info = await withTenant(tenantId, async (tx) => {
@@ -23,12 +25,13 @@ export async function notifyHandoff(tenantId: string, conversationId: string, re
   await sendEmail(info.emails, subject, text);
 }
 
-/** Envía un correo con Resend. Devuelve false si no está configurado o falló (el detalle queda en el log). */
+/** Envía un correo por SMTP o Resend. Devuelve false si no está configurado o falló (el detalle queda en el log). */
 export async function sendEmail(to: string[], subject: string, text: string) {
-  const key = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFY_FROM;
+  if (from && process.env.SMTP_HOST) return sendSmtp(from, to, subject, text);
+  const key = process.env.RESEND_API_KEY;
   if (!key || !from) {
-    console.log(`[correo sin enviar: falta RESEND_API_KEY o NOTIFY_FROM] ${subject}`);
+    console.log(`[correo sin enviar: falta SMTP_HOST o RESEND_API_KEY, o NOTIFY_FROM] ${subject}`);
     return false;
   }
   const res = await fetch("https://api.resend.com/emails", {
@@ -38,4 +41,26 @@ export async function sendEmail(to: string[], subject: string, text: string) {
   });
   if (!res.ok) console.error("No se pudo enviar el correo", res.status, await res.text());
   return res.ok;
+}
+
+const globalForMail = globalThis as unknown as { __smtp?: Transporter };
+
+async function sendSmtp(from: string, to: string[], subject: string, text: string) {
+  if (!globalForMail.__smtp) {
+    const port = Number(process.env.SMTP_PORT || 465);
+    globalForMail.__smtp = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD } : undefined,
+    });
+  }
+  try {
+    // Cada destinatario por separado, para que los usuarios de un negocio no vean los correos de los demás.
+    for (const addr of to) await globalForMail.__smtp.sendMail({ from, to: addr, subject, text });
+    return true;
+  } catch (err) {
+    console.error("No se pudo enviar el correo por SMTP", err instanceof Error ? err.message : err);
+    return false;
+  }
 }
