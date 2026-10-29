@@ -14,12 +14,14 @@
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.12",
     "next": "16.4.2",
+    "nodemailer": "^10.3.1",
     "postgres": "^3.4.9",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "typescript": "5.9.3"

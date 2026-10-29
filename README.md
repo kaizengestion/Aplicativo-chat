@@ -48,6 +48,10 @@ Postgres (Supabase)  ── RLS por tenant_id en todas las tablas
 
 Las claves van solo en las variables de entorno de Vercel; no hace falta compartirlas en ningún chat.
 
+## Desplegar en un servidor propio (Docker)
+
+`Dockerfile` + `deploy/docker-compose.yml` levantan la app y su Postgres en cualquier servidor con Docker. Paso a paso (incluye copiar los datos desde Supabase, el dominio con Caddy y los backups) en [`deploy/README.md`](deploy/README.md).
+
 ## Equipo
 
 En *Equipo* (solo administradores) se agregan personas con email y contraseña inicial. Los **agentes** ven y atienden conversaciones; los **administradores** además cambian el bot y el equipo. Quitar a alguien cierra su sesión de inmediato y sus conversaciones abiertas quedan marcadas como *Necesita persona*.
@@ -55,7 +59,7 @@ En *Equipo* (solo administradores) se agregan personas con email y contraseña i
 ## Límites y avisos
 
 - Chat público: máximo 8 mensajes por minuto y 200 por día por conversación; 5 chats nuevos por teléfono por hora y 30 por minuto por negocio (`src/lib/limits.ts`).
-- Cuando el bot pasa una conversación a una persona, se envía un correo a los usuarios del negocio vía Resend (`src/lib/notify.ts`). Sin `RESEND_API_KEY` el aviso solo queda en el log.
+- Cuando el bot pasa una conversación a una persona, se envía un correo a los usuarios del negocio por SMTP (`SMTP_HOST`, p. ej. Google Workspace) o, si no hay, por Resend (`src/lib/notify.ts`). Sin ninguno el aviso solo queda en el log.
 
 ## Estructura
 
