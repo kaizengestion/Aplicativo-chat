@@ -5,13 +5,12 @@ import { withTenant } from "@/lib/db";
 export default async function Contacts() {
   const s = (await getSession())!;
   const rows = await withTenant(s.tenantId, (tx) => tx<{
-    id: string; name: string; phone: string; email: string | null; last_seen_at: Date; conversations: number; last_conversation: string | null;
+    id: string; name: string; phone: string; email: string | null; last_seen_at: Date; visits: number; conversation: string | null;
   }[]>`
-    select ct.id, ct.name, ct.phone, ct.email, ct.last_seen_at,
-           count(c.id)::int as conversations,
-           (select id from conversations c2 where c2.contact_id = ct.id order by last_message_at desc limit 1) as last_conversation
+    select ct.id, ct.name, ct.phone, ct.email, ct.last_seen_at, c.id as conversation,
+           (select count(*) from chat_sessions s where s.conversation_id = c.id)::int as visits
     from contacts ct left join conversations c on c.contact_id = ct.id
-    group by ct.id order by ct.last_seen_at desc limit 500`);
+    order by ct.last_seen_at desc limit 500`);
 
   return (
     <>
@@ -22,14 +21,14 @@ export default async function Contacts() {
       </div>
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
-          <thead><tr><th>Nombre</th><th>WhatsApp</th><th>Email</th><th>Chats</th><th>Última visita</th></tr></thead>
+          <thead><tr><th>Nombre</th><th>WhatsApp</th><th>Email</th><th>Visitas</th><th>Última visita</th></tr></thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td>{r.last_conversation ? <Link href={`/admin/conversations/${r.last_conversation}`}>{r.name}</Link> : r.name}</td>
+                <td>{r.conversation ? <Link href={`/admin/conversations/${r.conversation}`}>{r.name}</Link> : r.name}</td>
                 <td><a href={`https://wa.me/${r.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">{r.phone}</a></td>
                 <td>{r.email ?? "—"}</td>
-                <td>{r.conversations}</td>
+                <td>{r.visits}</td>
                 <td>{r.last_seen_at.toLocaleString("es")}</td>
               </tr>
             ))}

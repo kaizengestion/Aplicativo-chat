@@ -21,10 +21,10 @@ export function kindOf(mime: string): AttachmentKind | null {
 export type BotAttachment = { kind: AttachmentKind; mime: string; name: string; data: Buffer };
 
 /** Bytes de las últimas imágenes/PDF de la conversación, para que el bot las lea (las más viejas solo se mencionan). */
-export async function recentFilesForBot(tx: Tx, conversationId: string, limit = 3) {
+export async function recentFilesForBot(tx: Tx, conversationId: string, sinceMessageId = 0, limit = 3) {
   const rows = await tx<(BotAttachment & { message_id: number })[]>`
     select message_id::int as message_id, kind, mime, name, data from attachments
-    where conversation_id = ${conversationId} and kind in ('image', 'pdf')
+    where conversation_id = ${conversationId} and message_id >= ${sinceMessageId} and kind in ('image', 'pdf')
     order by created_at desc limit ${limit}`;
   return new Map(rows.map((r) => [r.message_id, r]));
 }

@@ -13,7 +13,7 @@ export async function GET(req: Request, { params }: Ctx) {
     const [conversation] = await tx`
       select c.id, c.status, c.needs_human, c.handoff_reason, c.created_at, c.last_message_at,
              ct.id as contact_id, ct.name as contact_name, ct.phone as contact_phone, ct.email as contact_email,
-             u.name as assigned_name
+             u.name as assigned_name, (select count(*) from chat_sessions s where s.conversation_id = c.id)::int as visits
       from conversations c join contacts ct on ct.id = c.contact_id
       left join app_users u on u.id = c.assigned_user_id
       where c.id = ${id}`;
