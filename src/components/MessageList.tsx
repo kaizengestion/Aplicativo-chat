@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import type { Message } from "@/lib/db";
 import WaveAudio from "./WaveAudio";
 
@@ -17,27 +17,35 @@ export default function MessageList({ messages, perspective, botName, typing, fi
 
   return (
     <div className="chat-body">
-      {messages.map((m) => {
-        if (m.sender === "system") {
-          return perspective === "agent" ? <div key={m.id} className="sys">{m.content}</div> : null;
-        }
-        const mine = perspective === "contact" ? m.sender === "contact" : m.sender !== "contact";
-        const who = m.sender === "bot" ? botName : m.sender === "agent" ? (m.agent_name ?? "Equipo") : perspective === "agent" ? "Cliente" : null;
-        return (
-          <div key={m.id} className={`bubble ${mine ? "me" : "them"} ${m.sender === "agent" && !mine ? "agent" : ""}`}>
-            {who && !(perspective === "contact" && mine) && <span className="who">{who}</span>}
-            {m.attachment && <Attachment a={m.attachment} url={fileUrl(m.attachment.id)} />}
-            {/* El texto de un audio lo usa el bot; solo el equipo lo ve, el cliente ve el audio solo. */}
-            {m.attachment?.kind === "audio"
-              ? perspective === "agent" && <span className="transcript">{m.content || "Audio sin transcripción"}</span>
-              : m.content}
-          </div>
-        );
+      {messages.map((m, i) => {
+        // En el tablero, cada visita del cliente (todas en la misma conversación) arranca con un separador.
+        const sep = perspective === "agent" && m.new_session && i > 0
+          ? <div className="session-sep">Volvió a abrir el chat · {new Date(m.created_at).toLocaleString()}</div>
+          : null;
+        return <Fragment key={m.id}>{sep}{bubble(m)}</Fragment>;
       })}
       {typing && <div className="typing">{botName} está escribiendo…</div>}
       <div ref={end} />
     </div>
   );
+
+  function bubble(m: Message) {
+    if (m.sender === "system") {
+      return perspective === "agent" ? <div className="sys">{m.content}</div> : null;
+    }
+    const mine = perspective === "contact" ? m.sender === "contact" : m.sender !== "contact";
+    const who = m.sender === "bot" ? botName : m.sender === "agent" ? (m.agent_name ?? "Equipo") : perspective === "agent" ? "Cliente" : null;
+    return (
+      <div className={`bubble ${mine ? "me" : "them"} ${m.sender === "agent" && !mine ? "agent" : ""}`}>
+        {who && !(perspective === "contact" && mine) && <span className="who">{who}</span>}
+        {m.attachment && <Attachment a={m.attachment} url={fileUrl(m.attachment.id)} />}
+        {/* El texto de un audio lo usa el bot; solo el equipo lo ve, el cliente ve el audio solo. */}
+        {m.attachment?.kind === "audio"
+          ? perspective === "agent" && <span className="transcript">{m.content || "Audio sin transcripción"}</span>
+          : m.content}
+      </div>
+    );
+  }
 }
 
 function Attachment({ a, url }: { a: NonNullable<Message["attachment"]>; url: string }) {

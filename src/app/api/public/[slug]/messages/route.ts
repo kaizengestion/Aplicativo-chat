@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: Ctx) {
   const found = await resolve(slug, url.searchParams.get("token"));
   if (!found) return Response.json({ error: "Conversación no encontrada" }, { status: 404 });
   const after = Number(url.searchParams.get("after") ?? 0) || 0;
-  const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after));
+  const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after, found.conv.since));
   return Response.json({ messages, status: found.conv.status });
 }
 
@@ -45,11 +45,11 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!content && !file) return Response.json({ error: "Mensaje vacío" }, { status: 400 });
 
   try {
-    await handleContactMessage(found.tenant.id, found.conv.id, content, file);
+    await handleContactMessage(found.tenant.id, found.conv, content, file);
   } catch (e) {
     return rateLimited(e);
   }
   const after = Number(body.after ?? 0) || 0;
-  const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after));
+  const messages = await withTenant(found.tenant.id, (tx) => messagesAfter(tx, found.conv.id, after, found.conv.since));
   return Response.json({ messages });
 }

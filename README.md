@@ -23,7 +23,8 @@ Postgres (Supabase)  ── RLS por tenant_id en todas las tablas
 - **Bot:** `src/lib/bot.ts`. Prompt con la “información del negocio” que cada tenant carga en *Bot y enlace*. Tiene la herramienta `transfer_to_human`: cuando el cliente pide una persona o el bot no sabe, marca la conversación como *Necesita persona*. Sin `ANTHROPIC_API_KEY` responde en modo demo.
 - **Tomar la conversación:** el agente pulsa *Tomar conversación* o simplemente escribe. El estado pasa a `human` y el bot deja de responder (si una respuesta del bot estaba en curso, se descarta). *Devolver al bot* lo reactiva.
 - **Consultas en lenguaje natural:** `src/lib/nlquery.ts`. Claude genera SQL de solo lectura que se ejecuta con el rol `chat_reader` (solo ve contactos, conversaciones y mensajes, no usuarios), en transacción `read only`, con timeout de 5 s, envuelto en subconsulta y con RLS del tenant activo.
-- **Contactos:** se deduplican por teléfono dentro de cada tenant; exportables a CSV.
+- **Contactos:** uno por número dentro de cada tenant (`normalize_phone()` reconoce +54 9, 011 15, etc. como el mismo número); exportables a CSV.
+- **Una conversación por contacto:** cada vez que el cliente abre el chat (o lo reinicia) es una sesión nueva en `chat_sessions`, con su token. En el tablero se ve todo en un solo hilo con un separador por visita; el cliente y el bot solo ven la sesión actual, así nadie lee lo anterior con solo saber un número.
 
 ## Puesta en marcha
 
@@ -48,6 +49,10 @@ Postgres (Supabase)  ── RLS por tenant_id en todas las tablas
 
 Las claves van solo en las variables de entorno de Vercel; no hace falta compartirlas en ningún chat.
 
+## Desplegar en un servidor propio (Docker)
+
+`Dockerfile` + `deploy/docker-compose.yml` levantan la app y su Postgres en cualquier servidor con Docker. Paso a paso (incluye copiar los datos desde Supabase, el dominio con Caddy y los backups) en [`deploy/README.md`](deploy/README.md).
+
 ## Equipo
 
 En *Equipo* (solo administradores) se agregan personas con email y contraseña inicial. Los **agentes** ven y atienden conversaciones; los **administradores** además cambian el bot y el equipo. Quitar a alguien cierra su sesión de inmediato y sus conversaciones abiertas quedan marcadas como *Necesita persona*.
@@ -55,7 +60,7 @@ En *Equipo* (solo administradores) se agregan personas con email y contraseña i
 ## Límites y avisos
 
 - Chat público: máximo 8 mensajes por minuto y 200 por día por conversación; 5 chats nuevos por teléfono por hora y 30 por minuto por negocio (`src/lib/limits.ts`).
-- Cuando el bot pasa una conversación a una persona, se envía un correo a los usuarios del negocio vía Resend (`src/lib/notify.ts`). Sin `RESEND_API_KEY` el aviso solo queda en el log.
+- Cuando el bot pasa una conversación a una persona, se envía un correo a los usuarios del negocio por SMTP (`SMTP_HOST`, p. ej. Google Workspace) o, si no hay, por Resend (`src/lib/notify.ts`). Sin ninguno el aviso solo queda en el log.
 
 ## Estructura
 

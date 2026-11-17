@@ -9,6 +9,7 @@ conversations(id uuid, contact_id uuid -> contacts.id, status text ['bot','human
               created_at timestamptz, last_message_at timestamptz)
 messages(id bigint, conversation_id uuid -> conversations.id, sender text ['contact','bot','agent','system'], content text, created_at timestamptz)
 
+Cada contacto (un número de teléfono) tiene una sola conversación con todas sus visitas al chat.
 "contact" = mensaje del cliente, "bot" = asistente automático, "agent" = persona del equipo.`;
 
 const SQL_TOOL: Anthropic.Beta.BetaTool = {

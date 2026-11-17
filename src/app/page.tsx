@@ -1,20 +1,24 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
+import { publicTenant } from "@/lib/db";
 import { APP_NAME } from "@/lib/brand";
+import KaizenBackdrop from "@/components/KaizenBackdrop";
+import ChatWidget from "./c/[slug]/ChatWidget";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+/** Negocio cuyo chat se muestra en la portada (por defecto, el de Kaizen). */
+const HOME_SLUG = process.env.HOME_CHAT_SLUG || "kaizen-gestion";
+
+export const metadata = { title: APP_NAME };
+
+/** Portada: el cliente deja sus datos y chatea; el equipo entra al panel con el botón Admin. */
+export default async function Home() {
+  const tenant = await publicTenant(HOME_SLUG);
+  if (!tenant) notFound();
   return (
-    <main className="center-page">
-      <div className="narrow card">
-        <p className="brand" style={{ fontSize: "1.75rem", margin: "0 0 0.5rem" }}>KAIZEN</p>
-        <h1>{APP_NAME}</h1>
-        <p className="muted">
-          Crea el chat de tu negocio, pega el enlace en tu respuesta automática de WhatsApp y sigue cada conversación desde el tablero.
-        </p>
-        <div className="row">
-          <Link className="btn primary" href="/signup">Crear mi negocio</Link>
-          <Link className="btn" href="/login">Entrar</Link>
-        </div>
-      </div>
-    </main>
+    <>
+      <KaizenBackdrop />
+      <ChatWidget slug={HOME_SLUG} businessName={tenant.name} botName={tenant.bot_name} welcome={tenant.welcome_message} showAdmin />
+    </>
   );
 }

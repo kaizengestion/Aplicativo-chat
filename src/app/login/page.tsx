@@ -5,7 +5,8 @@ export default function Login() {
   return (
     <main className="center-page">
       <div className="narrow card">
-        <h1>Entrar al tablero</h1>
+        <p className="brand" style={{ fontSize: "1.25rem", margin: "0 0 0.5rem" }}>KAIZEN</p>
+        <h1>Acceso admin</h1>
         <AuthForm
           endpoint="/api/auth/login"
           submit="Entrar"
@@ -15,7 +16,7 @@ export default function Login() {
           ]}
         />
         <p className="muted"><Link href="/forgot">¿Olvidaste tu contraseña?</Link></p>
-        <p className="muted">¿No tienes cuenta? <Link href="/signup">Crea tu negocio</Link></p>
+        <p className="muted"><Link href="/">← Volver al chat</Link></p>
       </div>
     </main>
   );

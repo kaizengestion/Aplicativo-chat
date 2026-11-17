@@ -1,0 +1,53 @@
+# App + base Postgres en el servidor propio. Uso: ver deploy/README.md.
+# Las claves salen de deploy/.env (copia de deploy/.env.example, permisos 600, nunca en git).
+name: chat-kaizen
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chatapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?falta DB_ADMIN_PASSWORD en deploy/.env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./backups:/backups
+    # Solo desde el propio servidor (para backups y mantenimiento); la app entra por la red interna.
+    ports:
+      - "127.0.0.1:${DB_PORT:-5434}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chatapp"]
+      interval: 10s
+      retries: 6
+
+  app:
+    build:
+      context: ..
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?falta NEXT_PUBLIC_APP_URL en deploy/.env}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://chat_app:${APP_DB_PASSWORD}@db:5432/chatapp
+      ADMIN_DATABASE_URL: postgres://postgres:${DB_ADMIN_PASSWORD}@db:5432/chatapp
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?falta APP_DB_PASSWORD en deploy/.env}
+      SESSION_SECRET: ${SESSION_SECRET:?falta SESSION_SECRET en deploy/.env}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-}
+      NOTIFY_FROM: ${NOTIFY_FROM:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    # Caddy (kaizen-edge) llega por Tailscale a este puerto.
+    ports:
+      - "${APP_PORT:-8020}:3000"
+
+volumes:
+  db-data:
