@@ -25,7 +25,11 @@ export default function ChatWidget({ slug, businessName, botName, welcome, showA
     if (!Array.isArray(incoming) || !incoming.length) return;
     setMessages((prev) => {
       const seen = new Set(prev.map((m) => m.id));
-      const next = [...prev, ...incoming.filter((m) => !seen.has(m.id))];
+      const fresh = incoming.filter((m) => !seen.has(m.id));
+      // Mientras el bot piensa, el sondeo trae el mensaje real del cliente: reemplaza al provisorio
+      // (id negativo) para que no se vea duplicado.
+      const base = fresh.some((m) => m.sender === "contact") ? prev.filter((m) => m.id > 0) : prev;
+      const next = [...base, ...fresh];
       lastId.current = Math.max(lastId.current, ...next.map((m) => m.id));
       return next;
     });
