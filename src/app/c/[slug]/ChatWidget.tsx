@@ -8,8 +8,8 @@ import Composer, { type Outgoing } from "./Composer";
 
 const POLL_MS = 3000;
 
-export default function ChatWidget({ slug, businessName, botName, welcome }: {
-  slug: string; businessName: string; botName: string; welcome: string;
+export default function ChatWidget({ slug, businessName, botName, welcome, showAdmin = false }: {
+  slug: string; businessName: string; botName: string; welcome: string; showAdmin?: boolean;
 }) {
   const storageKey = `chat-token:${slug}`;
   const [token, setToken] = useState<string | null>(null);
@@ -163,6 +163,7 @@ export default function ChatWidget({ slug, businessName, botName, welcome }: {
             <strong>{APP_NAME}</strong>
             <div className="muted" style={{ fontSize: "0.8125rem" }}>{businessName} · Atiende {withHuman ? "una persona del equipo" : botName}</div>
           </div>
+          {showAdmin && <a href="/login" className="btn admin-link">Admin</a>}
           {token && <ChatMenu withHuman={withHuman} onHuman={askForHuman} onRestart={restart} />}
         </header>
   
